@@ -11,6 +11,7 @@ import CampaignLaunch from "./pages/CampaignLaunch";
 import ContentStudio from "./pages/ContentStudio";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -21,8 +22,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Index />} />
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/campaigns" element={<CampaignsPage />} />
             <Route path="/campaigns/launch/:id" element={<CampaignLaunch />} />
             <Route path="/content" element={<ContentStudio />} />
