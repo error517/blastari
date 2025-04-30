@@ -5,8 +5,10 @@ import CampaignRecommendation, { RecommendationProps } from "@/components/dashbo
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, PieChart, Pie, Cell, Legend } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
+import { ArrowRight, ArrowUpRight, TrendingUp, TrendingDown } from "lucide-react";
 
 // Sample data for the analytics charts
 const performanceData = [
@@ -30,6 +32,24 @@ const deviceData = [
   { name: "Mobile", value: 6500, color: "#0088FE" },
   { name: "Desktop", value: 3500, color: "#00C49F" },
   { name: "Tablet", value: 1000, color: "#FFBB28" },
+];
+
+// New data for enhanced analytics
+const conversionFunnelData = [
+  { name: "Impressions", value: 245700 },
+  { name: "Clicks", value: 12800 },
+  { name: "Page Views", value: 9600 },
+  { name: "Add to Cart", value: 4200 },
+  { name: "Purchases", value: 1240 },
+];
+
+const audienceData = [
+  { name: "18-24", male: 820, female: 930, other: 150 },
+  { name: "25-34", male: 1450, female: 1600, other: 270 },
+  { name: "35-44", male: 1200, female: 1100, other: 210 },
+  { name: "45-54", male: 950, female: 850, other: 140 },
+  { name: "55-64", male: 650, female: 720, other: 110 },
+  { name: "65+", male: 420, female: 380, other: 70 },
 ];
 
 const Dashboard = () => {
@@ -89,20 +109,6 @@ const Dashboard = () => {
         difficulty: "Hard",
         budget: "$700-1500"
       },
-      {
-        id: "4",
-        title: "Remarketing Campaign",
-        platform: "Facebook",
-        description: "Target users who have visited your website but didn't convert with personalized messaging.",
-        insights: [
-          "Your website has a 68% bounce rate that could be improved with remarketing",
-          "Similar businesses see 40% conversion rate from remarketing campaigns",
-          "Dynamic product ads could showcase items users viewed"
-        ],
-        roi: "6.1x",
-        difficulty: "Medium",
-        budget: "$400-800"
-      }
     ];
     
     setRecommendations(mockRecommendations);
@@ -124,10 +130,15 @@ const Dashboard = () => {
       {recommendations.length > 0 && (
         <>
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">
-              AI Recommended Campaigns for {websiteUrl}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">
+                AI Recommended Campaigns for {websiteUrl}
+              </h2>
+              <button className="text-sm text-primary font-medium flex items-center hover:underline">
+                View all recommendations <ArrowRight className="ml-1 h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {recommendations.map((recommendation) => (
                 <CampaignRecommendation key={recommendation.id} {...recommendation} />
               ))}
@@ -160,7 +171,7 @@ const Dashboard = () => {
                   <div className="text-2xl font-bold">245.7K</div>
                   <p className="text-xs text-muted-foreground flex items-center">
                     <span className="text-green-500 flex items-center mr-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="m18 15-6-6-6 6"/></svg>
+                      <ArrowUpRight className="h-3 w-3 mr-1" />
                       12.5%
                     </span>
                     from previous period
@@ -175,7 +186,7 @@ const Dashboard = () => {
                   <div className="text-2xl font-bold">12.8K</div>
                   <p className="text-xs text-muted-foreground flex items-center">
                     <span className="text-green-500 flex items-center mr-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="m18 15-6-6-6 6"/></svg>
+                      <ArrowUpRight className="h-3 w-3 mr-1" />
                       8.2%
                     </span>
                     from previous period
@@ -190,7 +201,7 @@ const Dashboard = () => {
                   <div className="text-2xl font-bold">5.2%</div>
                   <p className="text-xs text-muted-foreground flex items-center">
                     <span className="text-red-500 flex items-center mr-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="m6 9 6 6 6-6"/></svg>
+                      <TrendingDown className="h-3 w-3 mr-1" />
                       1.3%
                     </span>
                     from previous period
@@ -205,7 +216,7 @@ const Dashboard = () => {
                   <div className="text-2xl font-bold">1,240</div>
                   <p className="text-xs text-muted-foreground flex items-center">
                     <span className="text-green-500 flex items-center mr-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="m18 15-6-6-6 6"/></svg>
+                      <TrendingUp className="h-3 w-3 mr-1" />
                       4.6%
                     </span>
                     from previous period
@@ -219,7 +230,10 @@ const Dashboard = () => {
                 <TabsTrigger value="performance">Performance Trends</TabsTrigger>
                 <TabsTrigger value="sources">Traffic Sources</TabsTrigger>
                 <TabsTrigger value="devices">Device Breakdown</TabsTrigger>
+                <TabsTrigger value="conversions">Conversion Funnel</TabsTrigger>
+                <TabsTrigger value="demographics">Audience Demographics</TabsTrigger>
               </TabsList>
+              
               <TabsContent value="performance">
                 <Card>
                   <CardHeader>
@@ -239,6 +253,7 @@ const Dashboard = () => {
                           <XAxis dataKey="name" />
                           <YAxis />
                           <Tooltip />
+                          <Legend />
                           <Line
                             type="monotone"
                             dataKey="impressions"
@@ -269,6 +284,7 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
+              
               <TabsContent value="sources">
                 <Card>
                   <CardHeader>
@@ -296,12 +312,14 @@ const Dashboard = () => {
                             ))}
                           </Pie>
                           <Tooltip />
+                          <Legend />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
+              
               <TabsContent value="devices">
                 <Card>
                   <CardHeader>
@@ -329,7 +347,67 @@ const Dashboard = () => {
                             ))}
                           </Pie>
                           <Tooltip />
+                          <Legend />
                         </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="conversions">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Conversion Funnel</CardTitle>
+                    <CardDescription>
+                      Visualize how users convert through the purchase journey
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={conversionFunnelData}
+                          layout="vertical"
+                          margin={{ top: 20, right: 30, left: 60, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis dataKey="name" type="category" />
+                          <Tooltip formatter={(value) => new Intl.NumberFormat().format(value as number)} />
+                          <Legend />
+                          <Bar dataKey="value" name="Users" fill="#8884d8" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="demographics">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Audience Demographics</CardTitle>
+                    <CardDescription>
+                      Age and gender distribution of your audience
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[400px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={audienceData}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="male" name="Male" stackId="a" fill="#8884d8" />
+                          <Bar dataKey="female" name="Female" stackId="a" fill="#82ca9d" />
+                          <Bar dataKey="other" name="Other" stackId="a" fill="#ffc658" />
+                        </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
