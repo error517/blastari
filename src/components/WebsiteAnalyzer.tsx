@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronUp, DollarSign, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronUp, DollarSign, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface WebsiteAnalysis {
@@ -89,6 +89,7 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
   const [showAll, setShowAll] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState(5000); // Default to $5k
   const [tempBudget, setTempBudget] = useState(5000); // For slider value
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (url) {
@@ -100,6 +101,7 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
     if (!url) return;
 
     setIsLoading(true);
+    setError(null);
     setAnalysis(null);
     setRecommendations([]);
     setShowAll(false);
@@ -112,6 +114,7 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
       toast.success('Analysis complete');
     } catch (error) {
       console.error('Error analyzing website:', error);
+      setError(error instanceof Error ? error.message : 'Failed to analyze website');
       toast.error(error instanceof Error ? error.message : 'Failed to analyze website');
     } finally {
       setIsLoading(false);
@@ -179,6 +182,21 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="text-red-500 mb-4">
+          <AlertCircle className="h-12 w-12" />
+        </div>
+        <p className="text-lg font-semibold mb-2">Analysis Failed</p>
+        <p className="text-muted-foreground text-center mb-4">{error}</p>
+        <Button onClick={handleAnalyze} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
   if (!analysis) {
     return null;
   }
@@ -218,7 +236,7 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
           <div>
             <h3 className="font-semibold mb-2">Goals</h3>
             <ul className="list-disc list-inside text-muted-foreground">
-              {analysis.goal.map((goal, index) => (
+              {analysis.goal?.map((goal, index) => (
                 <li key={`goal-${index}`}>{goal}</li>
               ))}
             </ul>
@@ -232,7 +250,7 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
           <div>
             <h3 className="font-semibold mb-2">Strengths</h3>
             <ul className="list-disc list-inside text-muted-foreground">
-              {analysis.strengths.map((strength, index) => (
+              {analysis.strengths?.map((strength, index) => (
                 <li key={`strength-${index}`}>{strength}</li>
               ))}
             </ul>
@@ -241,7 +259,7 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
           <div>
             <h3 className="font-semibold mb-2">Constraints</h3>
             <ul className="list-disc list-inside text-muted-foreground">
-              {analysis.constraints.map((constraint, index) => (
+              {analysis.constraints?.map((constraint, index) => (
                 <li key={`constraint-${index}`}>{constraint}</li>
               ))}
             </ul>
@@ -250,7 +268,7 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
           <div>
             <h3 className="font-semibold mb-2">Preferred Channels</h3>
             <ul className="list-disc list-inside text-muted-foreground">
-              {analysis.preferredChannels.map((channel, index) => (
+              {analysis.preferredChannels?.map((channel, index) => (
                 <li key={`channel-${index}`}>{channel}</li>
               ))}
             </ul>
@@ -267,22 +285,24 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
         <CardHeader className="space-y-4">
           <div className="flex flex-row items-center justify-between">
             <CardTitle>Campaign Recommendations</CardTitle>
-            <Button
-              variant="ghost"
-              onClick={showAll ? handleShowLess : handleShowAll}
-              disabled={isLoading}
-              className="gap-2"
-            >
-              {showAll ? (
-                <>
-                  Show Less <ChevronUp className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  Show All Campaigns <ChevronDown className="h-4 w-4" />
-                </>
-              )}
-            </Button>
+            {recommendations.length > 0 && (
+              <Button
+                variant="ghost"
+                onClick={showAll ? handleShowLess : handleShowAll}
+                disabled={isLoading}
+                className="gap-2"
+              >
+                {showAll ? (
+                  <>
+                    Show Less <ChevronUp className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Show All Campaigns <ChevronDown className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            )}
           </div>
           
           <div className="space-y-4">
@@ -330,58 +350,64 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {recommendations.map((recommendation) => (
-              <Card 
-                key={recommendation.id}
-                className={cn(
-                  "transition-all duration-200 hover:shadow-lg",
-                  getDifficultyColor(recommendation.difficulty)
-                )}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg">{recommendation.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{recommendation.platform}</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm">{recommendation.description}</p>
-                  <div>
-                    <h4 className="font-semibold text-sm mb-2">Key Insights</h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground">
-                      {recommendation.insights.map((insight, index) => (
-                        <li key={`insight-${index}`}>{insight}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
+          {recommendations.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {recommendations.map((recommendation) => (
+                <Card 
+                  key={recommendation.id}
+                  className={cn(
+                    "transition-all duration-200 hover:shadow-lg",
+                    getDifficultyColor(recommendation.difficulty)
+                  )}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg">{recommendation.title}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{recommendation.platform}</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm">{recommendation.description}</p>
                     <div>
-                      <p className="font-semibold">ROI</p>
-                      <p className={cn("font-medium", getRoiColor(recommendation.roi))}>
-                        {recommendation.roi}
-                      </p>
+                      <h4 className="font-semibold text-sm mb-2">Key Insights</h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground">
+                        {recommendation.insights?.map((insight, index) => (
+                          <li key={`insight-${index}`}>{insight}</li>
+                        ))}
+                      </ul>
                     </div>
-                    <div>
-                      <p className="font-semibold">Difficulty</p>
-                      <p className={cn(
-                        "font-medium",
-                        recommendation.difficulty === "Easy" && "text-green-600",
-                        recommendation.difficulty === "Medium" && "text-yellow-600",
-                        recommendation.difficulty === "Hard" && "text-red-600"
-                      )}>
-                        {recommendation.difficulty}
-                      </p>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <p className="font-semibold">ROI</p>
+                        <p className={cn("font-medium", getRoiColor(recommendation.roi))}>
+                          {recommendation.roi}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Difficulty</p>
+                        <p className={cn(
+                          "font-medium",
+                          recommendation.difficulty === "Easy" && "text-green-600",
+                          recommendation.difficulty === "Medium" && "text-yellow-600",
+                          recommendation.difficulty === "Hard" && "text-red-600"
+                        )}>
+                          {recommendation.difficulty}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold">Budget</p>
+                        <p className={cn("font-medium", getBudgetColor(recommendation.budget))}>
+                          {recommendation.budget}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold">Budget</p>
-                      <p className={cn("font-medium", getBudgetColor(recommendation.budget))}>
-                        {recommendation.budget}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No recommendations available yet. Adjust the budget or try analyzing again.
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
