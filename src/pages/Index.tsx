@@ -1,16 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { LinkIcon, ArrowRight, LogIn } from "lucide-react";
+import { LinkIcon, ArrowRight, LogIn, Rocket } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [url, setUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const navigate = useNavigate();
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,20 +47,16 @@ const Index = () => {
     }
   };
 
-  // Animation classes to be applied after component mount
-  const [isVisible, setIsVisible] = useState(false);
-  
-  useEffect(() => {
-    // Trigger animations after component mount
-    setIsVisible(true);
-  }, []);
-
   return (
     <div className="flex flex-col min-h-screen overflow-hidden">
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-purple-50 to-white py-20 min-h-screen flex items-center">
         <div className="container max-w-5xl px-4 mx-auto">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <Rocket className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold">Blastari</span>
+            </div>
             <Button 
               variant="ghost" 
               className="flex items-center gap-1"
@@ -124,7 +124,10 @@ const Index = () => {
         <div className="container max-w-5xl px-4 mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0 text-center md:text-left">
-              <h2 className="text-2xl font-bold">Blastari</h2>
+              <div className="flex items-center gap-2 mb-2">
+                <Rocket className="h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-bold">Blastari</h2>
+              </div>
               <p className="text-gray-400">AI-powered ad campaign platform</p>
             </div>
             <div className="flex space-x-6">

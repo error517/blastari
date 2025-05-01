@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import emailjs from '@emailjs/browser';
 import { 
   Mail, 
   BarChart3, 
@@ -13,38 +13,170 @@ import {
   FileSpreadsheet, 
   PenTool,
   BarChart4,
-  Share2
+  Share2,
+  CheckCircle2
 } from "lucide-react";
+
+interface WebsiteAnalysis {
+  productOverview: string;
+  coreValueProposition: string;
+  targetAudience: {
+    type: "Consumers" | "Business" | "Government";
+    segments: string[];
+  };
+  currentAwareness: string;
+  goal: string[];
+  budget: string;
+  strengths: string[];
+  constraints: string[];
+  preferredChannels: string[];
+  toneAndPersonality: string;
+}
+
+interface CampaignRecommendation {
+  id: string;
+  title: string;
+  platform: string;
+  description: string;
+  insights: string[];
+  roi: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  budget: string;
+}
 
 const ExportCampaign = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState("");
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [analysis, setAnalysis] = useState<WebsiteAnalysis | null>(null);
+  const [recommendations, setRecommendations] = useState<CampaignRecommendation[]>([]);
+  const [isEmailJsInitialized, setIsEmailJsInitialized] = useState(false);
 
   useEffect(() => {
-    // Retrieve stored recommendations and website URL
+    // Initialize EmailJS with your public key
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+    if (!publicKey) {
+      console.error('EmailJS public key is not configured');
+      toast.error('Email service is not properly configured');
+      return;
+    }
+
+    try {
+      emailjs.init(publicKey);
+      setIsEmailJsInitialized(true);
+    } catch (error) {
+      console.error('Failed to initialize EmailJS:', error);
+      toast.error('Failed to initialize email service');
+    }
+    
+    // Retrieve stored data
+    const storedAnalysis = localStorage.getItem('websiteAnalysis');
     const storedRecommendations = localStorage.getItem('campaignRecommendations');
     const storedUrl = localStorage.getItem('analyzedWebsiteUrl');
     
+    if (storedAnalysis) {
+      setAnalysis(JSON.parse(storedAnalysis));
+    }
     if (storedRecommendations) {
       setRecommendations(JSON.parse(storedRecommendations));
     }
-    
     if (storedUrl) {
       setWebsiteUrl(storedUrl);
     }
   }, []);
 
+  const generateEmailContent = () => {
+    if (!analysis || !recommendations.length) return '';
+
+    const implementationSteps = recommendations.map((rec, index) => `
+      ${index + 1}. ${rec.title} (${rec.platform})
+         - Budget: ${rec.budget}
+         - Difficulty: ${rec.difficulty}
+         - Expected ROI: ${rec.roi}
+         - Implementation Steps:
+           a. Set up ${rec.platform} account if not already done
+           b. Create campaign following platform guidelines
+           c. Implement targeting based on insights
+           d. Set budget and schedule
+           e. Launch and monitor performance
+    `).join('\n\n');
+
+    return `
+      <h1>Website Analysis Report for ${websiteUrl}</h1>
+
+      <h2>OVERVIEW</h2>
+      <p><strong>Product Overview:</strong> ${analysis.productOverview}</p>
+      <p><strong>Core Value Proposition:</strong> ${analysis.coreValueProposition}</p>
+
+      <h2>TARGET AUDIENCE</h2>
+      <p><strong>Type:</strong> ${analysis.targetAudience.type}</p>
+      <p><strong>Segments:</strong> ${analysis.targetAudience.segments.join(', ')}</p>
+
+      <h2>CURRENT STATUS</h2>
+      <p><strong>Awareness Stage:</strong> ${analysis.currentAwareness}</p>
+      <p><strong>Goals:</strong> ${analysis.goal.join(', ')}</p>
+      <p><strong>Budget:</strong> ${analysis.budget}</p>
+
+      <h2>STRENGTHS & CONSTRAINTS</h2>
+      <h3>Strengths:</h3>
+      <ul>
+        ${analysis.strengths.map(s => `<li>${s}</li>`).join('\n')}
+      </ul>
+
+      <h3>Constraints:</h3>
+      <ul>
+        ${analysis.constraints.map(c => `<li>${c}</li>`).join('\n')}
+      </ul>
+
+      <h2>MARKETING APPROACH</h2>
+      <p><strong>Preferred Channels:</strong> ${analysis.preferredChannels.join(', ')}</p>
+      <p><strong>Tone and Personality:</strong> ${analysis.toneAndPersonality}</p>
+
+      <h2>RECOMMENDED CAMPAIGNS</h2>
+      ${recommendations.map(rec => `
+        <div style="margin-bottom: 20px;">
+          <h3>${rec.title}</h3>
+          <p><strong>Platform:</strong> ${rec.platform}</p>
+          <p><strong>Description:</strong> ${rec.description}</p>
+          <h4>Key Insights:</h4>
+          <ul>
+            ${rec.insights.map(insight => `<li>${insight}</li>`).join('\n')}
+          </ul>
+          <p><strong>ROI:</strong> ${rec.roi}</p>
+          <p><strong>Difficulty:</strong> ${rec.difficulty}</p>
+          <p><strong>Budget:</strong> ${rec.budget}</p>
+        </div>
+      `).join('\n')}
+
+      <h2>IMPLEMENTATION GUIDE</h2>
+      ${implementationSteps}
+
+      <h2>NEXT STEPS</h2>
+      <ol>
+        <li>Review the analysis and recommendations</li>
+        <li>Prioritize campaigns based on your goals and resources</li>
+        <li>Start with the highest ROI, lowest difficulty campaigns</li>
+        <li>Set up tracking and analytics</li>
+        <li>Monitor and optimize performance</li>
+      </ol>
+
+      <p>Need help implementing these campaigns? Contact our support team for assistance.</p>
+    `;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isEmailJsInitialized) {
+      toast.error('Email service is not properly configured');
+      return;
+    }
     
     if (!email) {
       toast.error("Please enter your email address");
       return;
     }
     
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast.error("Please enter a valid email address");
@@ -53,18 +185,31 @@ const ExportCampaign = () => {
     
     setIsSubmitting(true);
     
-    // Simulate sending email
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // In a production app, we would send this data to a serverless function
-    // that would format and send an email with the campaign details
-    console.log("Sending campaign details to:", email);
-    console.log("Website:", websiteUrl);
-    console.log("Recommendations:", recommendations);
-    
-    setIsSubmitting(false);
-    toast.success("Campaign details sent to your email!");
-    setEmail("");
+    try {
+      const emailContent = generateEmailContent();
+      
+      const templateParams = {
+        to_email: email,
+        message: emailContent,
+        website_url: websiteUrl,
+      };
+
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+
+      if (!serviceId || !templateId) {
+        throw new Error('Email service configuration is incomplete');
+      }
+
+      await emailjs.send(serviceId, templateId, templateParams);
+      toast.success("Campaign details sent to your email!");
+      setEmail("");
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Define feature cards for the 3x3 grid
@@ -73,12 +218,6 @@ const ExportCampaign = () => {
       title: "Website Analysis",
       description: "AI-powered analysis of your website content and structure",
       icon: <Globe className="h-10 w-10 text-primary/80" />,
-      isActive: true,
-    },
-    {
-      title: "AI Recommendations",
-      description: "Custom campaign strategies based on your business",
-      icon: <Lightbulb className="h-10 w-10 text-primary/80" />,
       isActive: true,
     },
     {
@@ -129,52 +268,25 @@ const ExportCampaign = () => {
     <div className="container mx-auto max-w-6xl py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center">Export Your Campaign</h1>
       
-      {/* Active Features - Website Analysis and AI Recommendations */}
+      {/* Active Features - Website Analysis */}
       {recommendations.length > 0 && (
-        <>
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5 text-primary" />
-                Website Analysis
-              </CardTitle>
-              <CardDescription>
-                We've analyzed {websiteUrl || "your website"} and generated tailored campaign recommendations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Our AI has examined your website's structure, content, and target audience to create
-                custom campaign recommendations designed to maximize your marketing ROI.
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-primary" />
-                AI Recommendations
-              </CardTitle>
-              <CardDescription>
-                Your custom campaign strategies based on your business and goals
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                We've generated {recommendations.length} targeted campaign recommendations 
-                tailored specifically for your business.
-              </p>
-              <ul className="list-disc pl-5 space-y-2">
-                {recommendations.map((rec, idx) => (
-                  <li key={idx}>
-                    <span className="font-medium">{rec.title}</span>: {rec.description}
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              Website Analysis
+            </CardTitle>
+            <CardDescription>
+              We've analyzed {websiteUrl || "your website"} and generated tailored campaign recommendations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Our AI has examined your website's structure, content, and target audience to create
+              custom campaign recommendations designed to maximize your marketing ROI.
+            </p>
+          </CardContent>
+        </Card>
       )}
       
       {/* Feature Grid - 3x3 layout */}

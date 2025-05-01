@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Check, Clock, DollarSign, ExternalLink, Lightbulb, Target } from "lucide-react";
 import AdPreview from "@/components/campaigns/AdPreview";
 import { toast } from "sonner";
+import { WebsiteAnalyzer } from "@/components/WebsiteAnalyzer";
 
 const CampaignLaunch = () => {
   const { id } = useParams<{ id: string }>();
@@ -119,6 +119,7 @@ const CampaignLaunch = () => {
                 <TabsList className="mb-4">
                   <TabsTrigger value="previews">Ad Previews</TabsTrigger>
                   <TabsTrigger value="details">Campaign Details</TabsTrigger>
+                  <TabsTrigger value="analyzer">Website Analyzer</TabsTrigger>
                 </TabsList>
                 <TabsContent value="previews" className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,6 +189,9 @@ const CampaignLaunch = () => {
                       </div>
                     </div>
                   </div>
+                </TabsContent>
+                <TabsContent value="analyzer">
+                  <WebsiteAnalyzer />
                 </TabsContent>
               </Tabs>
             </CardContent>

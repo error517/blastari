@@ -1,7 +1,6 @@
-
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ChevronRight, Gauge, Image, PenSquare, Rocket, Zap } from "lucide-react";
+import { ChevronRight, Gauge, Image, Rocket, Zap } from "lucide-react";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -13,6 +12,12 @@ import {
   SidebarMenuItem,
   SidebarMenuButton
 } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const navigation = [
   {
@@ -39,40 +44,47 @@ const navigation = [
 
 const AppSidebar = () => {
   return (
-    <Sidebar>
-      <SidebarHeader className="flex items-center gap-2 px-6">
-        <div className="flex items-center gap-2">
-          <PenSquare size={24} className="text-sidebar-foreground" />
-          <span className="text-xl font-bold">AdLaunchGenie</span>
-        </div>
-        <SidebarTrigger className="ml-auto">
-          <ChevronRight size={16} />
-        </SidebarTrigger>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.href}
-                      className={({ isActive }) =>
-                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
-                      }
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.name}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <TooltipProvider>
+      <Sidebar>
+        <SidebarHeader className="flex items-center justify-center px-2 py-6">
+          <div className="relative w-full flex justify-center">
+            <div className="relative">
+              <Rocket size={48} className="text-white transform -rotate-45" strokeWidth={2.5} />
+              <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-white animate-pulse" />
+            </div>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-6">
+                {navigation.map((item) => (
+                  <SidebarMenuItem key={item.name}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton asChild className="w-full flex justify-center">
+                          <NavLink
+                            to={item.href}
+                            className={({ isActive }) =>
+                              isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : ""
+                            }
+                          >
+                            <item.icon className="h-16 w-16 text-white" strokeWidth={2.5} />
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        {item.name}
+                      </TooltipContent>
+                    </Tooltip>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+    </TooltipProvider>
   );
 };
 
