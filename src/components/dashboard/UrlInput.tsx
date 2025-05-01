@@ -50,11 +50,17 @@ const UrlInput: React.FC<UrlInputProps> = ({ onAnalyze, isAnalyzing }) => {
     // In a production app, we would store the profile data in Supabase here
     if (user) {
       try {
+        // First, create a metadata object to store additional information
+        const metadata = {
+          website_url: validatedUrl,
+          marketing_profile: profileData
+        };
+        
+        // Update only the metadata field which is allowed in the profiles table
         await supabase
           .from('profiles')
           .update({
-            website_url: validatedUrl,
-            marketing_profile: profileData
+            metadata: metadata
           })
           .eq('id', user.id);
         

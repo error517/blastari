@@ -4,7 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Mail } from "lucide-react";
+import { 
+  Mail, 
+  BarChart3, 
+  Globe, 
+  Lightbulb, 
+  Rocket, 
+  FileSpreadsheet, 
+  PenTool,
+  BarChart4,
+  Share2
+} from "lucide-react";
 
 const ExportCampaign = () => {
   const [email, setEmail] = useState("");
@@ -57,116 +67,148 @@ const ExportCampaign = () => {
     setEmail("");
   };
 
+  // Define feature cards for the 3x3 grid
+  const featureCards = [
+    {
+      title: "Website Analysis",
+      description: "AI-powered analysis of your website content and structure",
+      icon: <Globe className="h-10 w-10 text-primary/80" />,
+      isActive: true,
+    },
+    {
+      title: "AI Recommendations",
+      description: "Custom campaign strategies based on your business",
+      icon: <Lightbulb className="h-10 w-10 text-primary/80" />,
+      isActive: true,
+    },
+    {
+      title: "Campaign Launch",
+      description: "One-click campaign launch across platforms",
+      icon: <Rocket className="h-10 w-10 text-gray-400" />,
+      isActive: false,
+    },
+    {
+      title: "Analytics Dashboard",
+      description: "Real-time performance tracking",
+      icon: <BarChart3 className="h-10 w-10 text-gray-400" />,
+      isActive: false,
+    },
+    {
+      title: "Content Creation",
+      description: "AI-generated ad creative and messaging",
+      icon: <PenTool className="h-10 w-10 text-gray-400" />,
+      isActive: false,
+    },
+    {
+      title: "Audience Targeting",
+      description: "Precision audience segmentation",
+      icon: <BarChart4 className="h-10 w-10 text-gray-400" />,
+      isActive: false,
+    },
+    {
+      title: "Budget Optimization",
+      description: "Smart budget allocation across channels",
+      icon: <FileSpreadsheet className="h-10 w-10 text-gray-400" />,
+      isActive: false,
+    },
+    {
+      title: "Multi-Channel Campaigns",
+      description: "Unified campaigns across all platforms",
+      icon: <Share2 className="h-10 w-10 text-gray-400" />,
+      isActive: false,
+    },
+    {
+      title: "Campaign Templates",
+      description: "Ready-to-use campaign templates",
+      icon: <FileSpreadsheet className="h-10 w-10 text-gray-400" />,
+      isActive: false,
+    }
+  ];
+
   return (
-    <div className="container mx-auto max-w-4xl py-8 px-4">
+    <div className="container mx-auto max-w-6xl py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center">Export Your Campaign</h1>
       
-      {/* Website Analysis - this is shown */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Website Analysis</CardTitle>
-          <CardDescription>
-            We've analyzed {websiteUrl || "your website"} and generated tailored campaign recommendations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Our AI has examined your website's structure, content, and target audience to create
-            custom campaign recommendations designed to maximize your marketing ROI.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Active Features - Website Analysis and AI Recommendations */}
+      {recommendations.length > 0 && (
+        <>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Website Analysis
+              </CardTitle>
+              <CardDescription>
+                We've analyzed {websiteUrl || "your website"} and generated tailored campaign recommendations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Our AI has examined your website's structure, content, and target audience to create
+                custom campaign recommendations designed to maximize your marketing ROI.
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-primary" />
+                AI Recommendations
+              </CardTitle>
+              <CardDescription>
+                Your custom campaign strategies based on your business and goals
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                We've generated {recommendations.length} targeted campaign recommendations 
+                tailored specifically for your business.
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                {recommendations.map((rec, idx) => (
+                  <li key={idx}>
+                    <span className="font-medium">{rec.title}</span>: {rec.description}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </>
+      )}
       
-      {/* AI Recommendations - this is shown */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>AI Recommendations</CardTitle>
-          <CardDescription>
-            Your custom campaign strategies based on your business and goals
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            We've generated {recommendations.length} targeted campaign recommendations 
-            tailored specifically for your business.
-          </p>
-          <ul className="list-disc pl-5 space-y-2">
-            {recommendations.map((rec, idx) => (
-              <li key={idx}>
-                <span className="font-medium">{rec.title}</span>: {rec.description}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-      
-      {/* Campaign Launch - this is "coming soon" */}
-      <Card className="mb-8 bg-muted/50">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Campaign Launch</CardTitle>
-            <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
-              Coming Soon
-            </span>
-          </div>
-          <CardDescription>
-            One-click campaign launch across multiple platforms
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Launch your campaigns across Google, Meta, TikTok and more with a single click.
-            Our platform will handle the technical setup, audience targeting, and creative optimization.
-          </p>
-        </CardContent>
-      </Card>
-      
-      {/* Analytics Dashboard - this is "coming soon" */}
-      <Card className="mb-8 bg-muted/50">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Analytics Dashboard</CardTitle>
-            <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
-              Coming Soon
-            </span>
-          </div>
-          <CardDescription>
-            Real-time performance tracking and optimization
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Track all your campaign metrics in one unified dashboard with real-time data.
-            Our AI will continuously optimize your campaigns to improve performance.
-          </p>
-        </CardContent>
-      </Card>
-      
-      {/* Content Creation - this is "coming soon" */}
-      <Card className="mb-8 bg-muted/50">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Content Creation</CardTitle>
-            <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
-              Coming Soon
-            </span>
-          </div>
-          <CardDescription>
-            AI-generated ad creative and messaging
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Generate professional ad creatives, copy, and messaging tailored to your brand.
-            Our AI will create variants to test and optimize for the best performing content.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Feature Grid - 3x3 layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        {featureCards.map((feature, index) => (
+          <Card 
+            key={index} 
+            className={`transition-all ${
+              feature.isActive ? "bg-white" : "bg-muted/50"
+            }`}
+          >
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                {feature.icon}
+                {!feature.isActive && (
+                  <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                    Coming Soon
+                  </span>
+                )}
+              </div>
+              <CardTitle className="mt-2">{feature.title}</CardTitle>
+              <CardDescription>{feature.description}</CardDescription>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
       
       {/* Email subscription form */}
-      <Card>
+      <Card className="max-w-xl mx-auto">
         <CardHeader>
-          <CardTitle>Get Your Campaign Details</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-primary" />
+            Get Your Campaign Details
+          </CardTitle>
           <CardDescription>
             Enter your email to receive a detailed report of your campaign recommendations
           </CardDescription>

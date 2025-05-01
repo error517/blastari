@@ -72,12 +72,17 @@ const Dashboard = () => {
           tone: "Professional yet approachable, innovative"
         };
         
+        // Create a metadata object to store additional information
+        const metadata = {
+          website_url: url,
+          marketing_profile: marketingProfile
+        };
+        
         // Update the user's profile in Supabase
         await supabase
           .from('profiles')
           .update({ 
-            website_url: url,
-            marketing_profile: marketingProfile
+            metadata: metadata
           })
           .eq('id', user.id);
           

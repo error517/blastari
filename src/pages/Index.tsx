@@ -82,8 +82,8 @@ const Index = () => {
               <div className="pt-6 max-w-xl mx-auto">
                 <Card className="border-2 border-purple-100 shadow-lg animate-[fade-in_0.7s_ease-out]">
                   <CardContent className="pt-6">
-                    <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-3">
-                      <div className="flex items-center flex-1 gap-2 bg-white border rounded-md px-3">
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                      <div className="flex items-center w-full gap-2 bg-white border rounded-md px-3">
                         <LinkIcon className="h-5 w-5 text-gray-400" />
                         <Input 
                           value={url} 
@@ -94,8 +94,7 @@ const Index = () => {
                       </div>
                       <Button 
                         type="submit" 
-                        className="min-w-[180px] relative overflow-hidden group"
-                        size="lg"
+                        className="relative overflow-hidden group mx-auto"
                         disabled={isAnalyzing}
                       >
                         <span className="absolute right-full w-12 h-32 -mt-12 bg-white opacity-10 transform rotate-12 group-hover:translate-x-96 transition-transform duration-1000 ease-out"></span>
