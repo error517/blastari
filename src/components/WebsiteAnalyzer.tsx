@@ -52,15 +52,19 @@ const getDifficultyColor = (difficulty: "Easy" | "Medium" | "Hard") => {
   }
 };
 
-const getRoiColor = (roi: string) => {
+const getRoiColor = (roi: string | undefined) => {
+  if (!roi) return "text-gray-600";
   const roiValue = parseFloat(roi);
+  if (isNaN(roiValue)) return "text-gray-600";
   if (roiValue >= 5) return "text-green-600";
   if (roiValue >= 3) return "text-yellow-600";
   return "text-red-600";
 };
 
-const getBudgetColor = (budget: string) => {
-  const budgetValue = parseInt(budget.replace(/[^0-9]/g, ''));
+const getBudgetColor = (budget: string | undefined) => {
+  if (!budget) return "text-gray-600";
+  const budgetValue = parseInt(budget.replace(/[^0-9]/g, '') || '0');
+  if (isNaN(budgetValue)) return "text-gray-600";
   if (budgetValue <= 500) return "text-green-600";
   if (budgetValue <= 1500) return "text-yellow-600";
   return "text-red-600";
@@ -74,6 +78,7 @@ const BUDGET_RANGES = [
 ];
 
 const formatBudget = (amount: number) => {
+  if (isNaN(amount)) return '$0';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -378,7 +383,7 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
                       <div>
                         <p className="font-semibold">ROI</p>
                         <p className={cn("font-medium", getRoiColor(recommendation.roi))}>
-                          {recommendation.roi}
+                          {recommendation.roi || 'N/A'}
                         </p>
                       </div>
                       <div>
@@ -389,13 +394,13 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
                           recommendation.difficulty === "Medium" && "text-yellow-600",
                           recommendation.difficulty === "Hard" && "text-red-600"
                         )}>
-                          {recommendation.difficulty}
+                          {recommendation.difficulty || 'N/A'}
                         </p>
                       </div>
                       <div>
                         <p className="font-semibold">Budget</p>
                         <p className={cn("font-medium", getBudgetColor(recommendation.budget))}>
-                          {recommendation.budget}
+                          {recommendation.budget || 'N/A'}
                         </p>
                       </div>
                     </div>
