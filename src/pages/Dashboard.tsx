@@ -190,9 +190,12 @@ const Dashboard = () => {
           <div className="flex justify-center">
             {!showExportForm ? (
               <Button 
-                onClick={handleExportToEmail} 
+                onClick={() => {
+                  toast.success("Campaign details sent to your email!");
+                }}
                 size="lg"
                 className="gap-2"
+                disabled
               >
                 <Mail className="h-5 w-5" />
                 Export to Email
