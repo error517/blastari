@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Rocket, Zap, Link as LinkIcon, FileText, ArrowRight, Check } from "lucide-react";
+import { Rocket, Zap, Link as LinkIcon, FileText, ArrowRight, Check, LogIn } from "lucide-react";
 
 const Index = () => {
   const [url, setUrl] = useState('');
@@ -55,53 +54,66 @@ const Index = () => {
     <div className="flex flex-col min-h-screen overflow-hidden">
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-purple-50 to-white py-20">
-        <div className="container max-w-5xl px-4 mx-auto text-center">
-          <div className={`space-y-6 transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <div className="inline-block bg-purple-100 px-4 py-1 rounded-full mb-4">
-              <p className="text-purple-800 text-sm font-medium">AI-Powered Advertising</p>
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mx-auto max-w-3xl">
-              Launch <span className="text-primary">high-performing</span> ad campaigns in seconds
-            </h1>
-            <p className="text-xl text-gray-600 mx-auto max-w-2xl">
-              Blastari uses AI to analyze your website and create optimized ad campaigns tailored to your business needs.
-            </p>
-            
-            <div className="pt-6 max-w-xl mx-auto">
-              <Card className="border-2 border-purple-100 shadow-lg animate-[fade-in_0.7s_ease-out]">
-                <CardContent className="pt-6">
-                  <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-3">
-                    <div className="flex items-center flex-1 gap-2 bg-white border rounded-md px-3">
-                      <LinkIcon className="h-5 w-5 text-gray-400" />
-                      <Input 
-                        value={url} 
-                        onChange={(e) => setUrl(e.target.value)} 
-                        placeholder="Enter your website URL"
-                        className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
-                      />
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="min-w-[180px] relative overflow-hidden group"
-                      size="lg"
-                      disabled={isAnalyzing}
-                    >
-                      <span className="absolute right-full w-12 h-32 -mt-12 bg-white opacity-10 transform rotate-12 group-hover:translate-x-96 transition-transform duration-1000 ease-out"></span>
-                      {isAnalyzing ? (
-                        <>
-                          <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          Get Campaign Recommendations
-                          <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+        <div className="container max-w-5xl px-4 mx-auto">
+          <div className="flex justify-end mb-4">
+            <Button 
+              variant="ghost" 
+              className="flex items-center gap-1"
+              onClick={() => navigate('/auth')}
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Sign In</span>
+            </Button>
+          </div>
+          
+          <div className="text-center">
+            <div className={`space-y-6 transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+              <div className="inline-block bg-purple-100 px-4 py-1 rounded-full mb-4">
+                <p className="text-purple-800 text-sm font-medium">AI-Powered Advertising</p>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mx-auto max-w-3xl">
+                Launch <span className="text-primary">high-performing</span> ad campaigns in seconds
+              </h1>
+              <p className="text-xl text-gray-600 mx-auto max-w-2xl">
+                Blastari uses AI to analyze your website and create optimized ad campaigns tailored to your business needs.
+              </p>
+              
+              <div className="pt-6 max-w-xl mx-auto">
+                <Card className="border-2 border-purple-100 shadow-lg animate-[fade-in_0.7s_ease-out]">
+                  <CardContent className="pt-6">
+                    <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-3">
+                      <div className="flex items-center flex-1 gap-2 bg-white border rounded-md px-3">
+                        <LinkIcon className="h-5 w-5 text-gray-400" />
+                        <Input 
+                          value={url} 
+                          onChange={(e) => setUrl(e.target.value)} 
+                          placeholder="Enter your website URL"
+                          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+                        />
+                      </div>
+                      <Button 
+                        type="submit" 
+                        className="min-w-[180px] relative overflow-hidden group"
+                        size="lg"
+                        disabled={isAnalyzing}
+                      >
+                        <span className="absolute right-full w-12 h-32 -mt-12 bg-white opacity-10 transform rotate-12 group-hover:translate-x-96 transition-transform duration-1000 ease-out"></span>
+                        {isAnalyzing ? (
+                          <>
+                            <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            Get Campaign Recommendations
+                            <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
