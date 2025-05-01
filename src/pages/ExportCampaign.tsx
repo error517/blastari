@@ -1,38 +1,32 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Check, Mail, Rocket, Zap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { RecommendationProps } from "@/components/dashboard/CampaignRecommendation";
+import { Mail } from "lucide-react";
 
 const ExportCampaign = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [recommendations, setRecommendations] = useState<RecommendationProps[]>([]);
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [recommendations, setRecommendations] = useState<any[]>([]);
 
   useEffect(() => {
-    // Get recommendations and website from localStorage
+    // Retrieve stored recommendations and website URL
     const storedRecommendations = localStorage.getItem('campaignRecommendations');
     const storedUrl = localStorage.getItem('analyzedWebsiteUrl');
     
     if (storedRecommendations) {
       setRecommendations(JSON.parse(storedRecommendations));
-    } else {
-      navigate('/dashboard');
     }
     
     if (storedUrl) {
       setWebsiteUrl(storedUrl);
     }
-  }, [navigate]);
+  }, []);
 
-  const handleSendEmail = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email) {
@@ -40,192 +34,172 @@ const ExportCampaign = () => {
       return;
     }
     
-    setIsSending(true);
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    
+    setIsSubmitting(true);
     
     // Simulate sending email
-    setTimeout(() => {
-      setIsSending(false);
-      setIsSuccess(true);
-      toast.success("Campaign recommendations sent to your email!");
-    }, 2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // In a production app, we would send this data to a serverless function
+    // that would format and send an email with the campaign details
+    console.log("Sending campaign details to:", email);
+    console.log("Website:", websiteUrl);
+    console.log("Recommendations:", recommendations);
+    
+    setIsSubmitting(false);
+    toast.success("Campaign details sent to your email!");
+    setEmail("");
   };
 
   return (
-    <div className="container py-8">
-      <Button 
-        variant="ghost" 
-        className="mb-6"
-        onClick={() => navigate('/dashboard')}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to dashboard
-      </Button>
-
-      <div className="grid gap-10 grid-cols-1">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Your Campaign Recommendations</h1>
+    <div className="container mx-auto max-w-4xl py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8 text-center">Export Your Campaign</h1>
+      
+      {/* Website Analysis - this is shown */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Website Analysis</CardTitle>
+          <CardDescription>
+            We've analyzed {websiteUrl || "your website"} and generated tailored campaign recommendations
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <p className="text-muted-foreground">
-            Enter your email to receive detailed recommendations for {websiteUrl}
+            Our AI has examined your website's structure, content, and target audience to create
+            custom campaign recommendations designed to maximize your marketing ROI.
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle className="text-xl">AI Analysis Results</CardTitle>
-                <CardDescription>
-                  We've analyzed your website and created these recommendations
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <FeatureItem 
-                    icon={<Rocket className="h-5 w-5" />}
-                    title="Website Analysis"
-                    description="A complete analysis of your website content, design, and audience"
-                    available={true}
-                  />
-                  <FeatureItem 
-                    icon={<Zap className="h-5 w-5" />}
-                    title="AI Recommendations"
-                    description="Personalized campaign strategies based on your website"
-                    available={true}
-                  />
-                  <FeatureItem 
-                    icon={<Check className="h-5 w-5" />}
-                    title="One-Click Launch"
-                    description="Launch campaigns across multiple platforms with a single click"
-                    available={false}
-                  />
-                  <FeatureItem 
-                    icon={<Check className="h-5 w-5" />}
-                    title="Performance Tracking"
-                    description="Real-time dashboard to monitor campaign performance"
-                    available={false}
-                  />
-                  <FeatureItem 
-                    icon={<Check className="h-5 w-5" />}
-                    title="Smart Optimization"
-                    description="AI-powered campaign optimization to maximize ROI"
-                    available={false}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {recommendations.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Summary of Recommendations:</h3>
-                <ul className="space-y-2 list-disc pl-5">
-                  {recommendations.map((rec, index) => (
-                    <li key={index}>
-                      <span className="font-medium">{rec.title}</span>
-                      <span className="text-sm text-muted-foreground"> ({rec.platform})</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        </CardContent>
+      </Card>
+      
+      {/* AI Recommendations - this is shown */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>AI Recommendations</CardTitle>
+          <CardDescription>
+            Your custom campaign strategies based on your business and goals
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">
+            We've generated {recommendations.length} targeted campaign recommendations 
+            tailored specifically for your business.
+          </p>
+          <ul className="list-disc pl-5 space-y-2">
+            {recommendations.map((rec, idx) => (
+              <li key={idx}>
+                <span className="font-medium">{rec.title}</span>: {rec.description}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+      
+      {/* Campaign Launch - this is "coming soon" */}
+      <Card className="mb-8 bg-muted/50">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Campaign Launch</CardTitle>
+            <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
+              Coming Soon
+            </span>
           </div>
-
-          <div>
-            {!isSuccess ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Get Your Recommendations</CardTitle>
-                  <CardDescription>
-                    We'll send a detailed report with actionable insights to your email
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSendEmail} className="space-y-4">
-                    <div className="space-y-2">
-                      <label htmlFor="email" className="text-sm font-medium">Email Address</label>
-                      <Input 
-                        id="email"
-                        type="email" 
-                        placeholder="you@example.com" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full"
-                      disabled={isSending}
-                    >
-                      {isSending ? (
-                        <>
-                          <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="mr-2 h-4 w-4" />
-                          Send to My Email
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-green-200 bg-green-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-700">
-                    <Check className="h-5 w-5" />
-                    Success!
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4">We've sent the campaign recommendations to <strong>{email}</strong></p>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Please check your inbox (and spam folder if needed) for the detailed report.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/dashboard')}
-                    className="w-full"
-                  >
-                    Return to Dashboard
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+          <CardDescription>
+            One-click campaign launch across multiple platforms
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Launch your campaigns across Google, Meta, TikTok and more with a single click.
+            Our platform will handle the technical setup, audience targeting, and creative optimization.
+          </p>
+        </CardContent>
+      </Card>
+      
+      {/* Analytics Dashboard - this is "coming soon" */}
+      <Card className="mb-8 bg-muted/50">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Analytics Dashboard</CardTitle>
+            <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
+              Coming Soon
+            </span>
           </div>
-        </div>
-      </div>
+          <CardDescription>
+            Real-time performance tracking and optimization
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Track all your campaign metrics in one unified dashboard with real-time data.
+            Our AI will continuously optimize your campaigns to improve performance.
+          </p>
+        </CardContent>
+      </Card>
+      
+      {/* Content Creation - this is "coming soon" */}
+      <Card className="mb-8 bg-muted/50">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Content Creation</CardTitle>
+            <span className="bg-primary/20 text-primary px-2 py-1 rounded-full text-xs font-medium">
+              Coming Soon
+            </span>
+          </div>
+          <CardDescription>
+            AI-generated ad creative and messaging
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Generate professional ad creatives, copy, and messaging tailored to your brand.
+            Our AI will create variants to test and optimize for the best performing content.
+          </p>
+        </CardContent>
+      </Card>
+      
+      {/* Email subscription form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Get Your Campaign Details</CardTitle>
+          <CardDescription>
+            Enter your email to receive a detailed report of your campaign recommendations
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit" disabled={isSubmitting} className="gap-2">
+                {isSubmitting ? (
+                  <>
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4" />
+                    Send to Email
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
-
-// Helper component for feature items
-const FeatureItem = ({ 
-  icon, 
-  title, 
-  description, 
-  available 
-}: { 
-  icon: React.ReactNode, 
-  title: string, 
-  description: string, 
-  available: boolean 
-}) => (
-  <div className="flex items-start gap-3">
-    <div className={`p-2 rounded-md ${available ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'}`}>
-      {icon}
-    </div>
-    <div>
-      <h3 className="font-medium">
-        {title}
-        {!available && <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-500">Coming Soon</span>}
-      </h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </div>
-  </div>
-);
 
 export default ExportCampaign;
