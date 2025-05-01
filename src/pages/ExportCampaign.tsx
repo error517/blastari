@@ -51,6 +51,7 @@ const ExportCampaign = () => {
   const [analysis, setAnalysis] = useState<WebsiteAnalysis | null>(null);
   const [recommendations, setRecommendations] = useState<CampaignRecommendation[]>([]);
   const [isEmailJsInitialized, setIsEmailJsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Initialize EmailJS with your public key
@@ -70,18 +71,25 @@ const ExportCampaign = () => {
     }
     
     // Retrieve stored data
-    const storedAnalysis = localStorage.getItem('websiteAnalysis');
-    const storedRecommendations = localStorage.getItem('campaignRecommendations');
-    const storedUrl = localStorage.getItem('analyzedWebsiteUrl');
-    
-    if (storedAnalysis) {
-      setAnalysis(JSON.parse(storedAnalysis));
-    }
-    if (storedRecommendations) {
-      setRecommendations(JSON.parse(storedRecommendations));
-    }
-    if (storedUrl) {
-      setWebsiteUrl(storedUrl);
+    try {
+      const storedAnalysis = localStorage.getItem('websiteAnalysis');
+      const storedRecommendations = localStorage.getItem('campaignRecommendations');
+      const storedUrl = localStorage.getItem('analyzedWebsiteUrl');
+      
+      if (storedAnalysis) {
+        setAnalysis(JSON.parse(storedAnalysis));
+      }
+      if (storedRecommendations) {
+        setRecommendations(JSON.parse(storedRecommendations));
+      }
+      if (storedUrl) {
+        setWebsiteUrl(storedUrl);
+      }
+    } catch (error) {
+      console.error('Error loading stored data:', error);
+      toast.error('Failed to load saved analysis');
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -264,12 +272,23 @@ const ExportCampaign = () => {
     }
   ];
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto max-w-6xl py-8 px-4">
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <p className="text-lg">Loading your campaign data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-6xl py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center">Export Your Campaign</h1>
       
       {/* Active Features - Website Analysis */}
-      {recommendations.length > 0 && (
+      {analysis && recommendations.length > 0 && (
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -291,7 +310,7 @@ const ExportCampaign = () => {
       
       {/* Feature Grid - 3x3 layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {featureCards.map((feature, index) => (
+        {featureCards?.map((feature, index) => (
           <Card 
             key={index} 
             className={`transition-all ${
@@ -335,7 +354,11 @@ const ExportCampaign = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1"
               />
-              <Button type="submit" disabled={isSubmitting} className="gap-2">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || !isEmailJsInitialized || !analysis || !recommendations.length} 
+                className="gap-2"
+              >
                 {isSubmitting ? (
                   <>
                     <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
@@ -349,6 +372,16 @@ const ExportCampaign = () => {
                 )}
               </Button>
             </div>
+            {!isEmailJsInitialized && (
+              <p className="text-sm text-red-500">
+                Email service is not properly configured. Please check your environment variables.
+              </p>
+            )}
+            {!analysis && (
+              <p className="text-sm text-yellow-500">
+                No analysis data available. Please analyze a website first.
+              </p>
+            )}
           </form>
         </CardContent>
       </Card>
