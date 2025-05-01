@@ -15,6 +15,7 @@ import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
+import ExportCampaign from "./pages/ExportCampaign";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
                 <Route path="/campaigns/launch/:id" element={<CampaignLaunch />} />
                 <Route path="/content" element={<ContentStudio />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/export-campaign" element={<ExportCampaign />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />

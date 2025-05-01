@@ -22,7 +22,12 @@ const AuthPage = () => {
     const checkSession = async () => {
       const { data, error } = await supabase.auth.getSession();
       if (data.session) {
-        navigate('/dashboard');
+        const websiteUrl = localStorage.getItem('analyzedWebsiteUrl');
+        if (websiteUrl) {
+          navigate('/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       }
     };
     
@@ -32,7 +37,12 @@ const AuthPage = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN') {
-          navigate('/dashboard');
+          const websiteUrl = localStorage.getItem('analyzedWebsiteUrl');
+          if (websiteUrl) {
+            navigate('/dashboard');
+          } else {
+            navigate('/dashboard');
+          }
         }
       }
     );
@@ -78,7 +88,12 @@ const AuthPage = () => {
       if (error) throw error;
       
       toast.success("Sign in successful!");
-      navigate('/dashboard');
+      const websiteUrl = localStorage.getItem('analyzedWebsiteUrl');
+      if (websiteUrl) {
+        navigate('/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error: any) {
       toast.error(error.message || "Invalid login credentials");
     } finally {

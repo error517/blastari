@@ -1,14 +1,16 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import UrlInput from "@/components/dashboard/UrlInput";
 import CampaignRecommendation, { RecommendationProps } from "@/components/dashboard/CampaignRecommendation";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, BarChart, Bar, PieChart, Pie, Cell, Legend } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
-import { ArrowRight, ArrowUpRight, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowRight, ArrowUpRight, TrendingUp, TrendingDown, Mail } from "lucide-react";
 
 // Sample data for the analytics charts
 const performanceData = [
@@ -53,14 +55,27 @@ const audienceData = [
 ];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recommendations, setRecommendations] = useState<RecommendationProps[]>([]);
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [timeframe, setTimeframe] = useState("7days");
 
+  // Get website URL from localStorage on component mount
+  useEffect(() => {
+    const storedUrl = localStorage.getItem('analyzedWebsiteUrl');
+    if (storedUrl) {
+      setWebsiteUrl(storedUrl);
+      handleAnalyze(storedUrl);
+    }
+  }, []);
+
   const handleAnalyze = async (url: string) => {
     setIsAnalyzing(true);
     setWebsiteUrl(url);
+    
+    // Store URL in localStorage
+    localStorage.setItem('analyzedWebsiteUrl', url);
     
     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -116,6 +131,12 @@ const Dashboard = () => {
     toast.success("Analysis complete! Here are your recommendations.");
   };
 
+  const handleExportToEmail = () => {
+    // Save recommendations to localStorage to access them in the export page
+    localStorage.setItem('campaignRecommendations', JSON.stringify(recommendations));
+    navigate('/export-campaign');
+  };
+
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -125,7 +146,15 @@ const Dashboard = () => {
         </p>
       </div>
 
-      <UrlInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
+      {websiteUrl ? null : <UrlInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />}
+
+      {isAnalyzing && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <p className="text-lg">Analyzing {websiteUrl}...</p>
+          <p className="text-sm text-muted-foreground">This may take a moment</p>
+        </div>
+      )}
 
       {recommendations.length > 0 && (
         <>
@@ -142,6 +171,18 @@ const Dashboard = () => {
               {recommendations.map((recommendation) => (
                 <CampaignRecommendation key={recommendation.id} {...recommendation} />
               ))}
+            </div>
+            
+            {/* Add Export to Email button */}
+            <div className="flex justify-center mt-8">
+              <Button 
+                onClick={handleExportToEmail} 
+                size="lg"
+                className="gap-2"
+              >
+                <Mail className="h-5 w-5" />
+                Export to Email
+              </Button>
             </div>
           </div>
 
