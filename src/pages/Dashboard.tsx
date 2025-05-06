@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Mail, PenLine, Mic, Film, Clone, MessageCircle } from "lucide-react";
+import { Mail, PenLine, Mic, Film, Copy, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { WebsiteAnalyzer } from "@/components/WebsiteAnalyzer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,7 +91,7 @@ const Dashboard = () => {
     if (lowerPlatform.includes('audio') || lowerPlatform.includes('podcast')) return <Mic className="h-4 w-4" />;
     if (lowerPlatform.includes('email')) return <Mail className="h-4 w-4" />;
     if (lowerPlatform.includes('social')) return <MessageCircle className="h-4 w-4" />;
-    return <Clone className="h-4 w-4" />;
+    return <Copy className="h-4 w-4" />;
   };
 
   return (

@@ -5,7 +5,7 @@ import {
   PenLine, 
   Mic, 
   Film, 
-  Clone, 
+  Copy, 
   MessageCircle, 
   Search, 
   BarChart, 
@@ -57,7 +57,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
     if (campaignType.includes('audio') || platformType.includes('podcast')) return <Mic className="h-4 w-4" />;
     
     // Default icon
-    return <Clone className="h-4 w-4" />;
+    return <Copy className="h-4 w-4" />;
   };
 
   return (

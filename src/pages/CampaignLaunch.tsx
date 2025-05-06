@@ -15,6 +15,7 @@ const CampaignLaunch = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [campaign, setCampaign] = useState<any>(null);
+  const websiteUrl = localStorage.getItem('analyzedWebsiteUrl') || '';
 
   useEffect(() => {
     // Simulate API fetch delay
@@ -111,7 +112,7 @@ const CampaignLaunch = () => {
             <CardHeader>
               <CardTitle>Campaign Preview</CardTitle>
               <CardDescription>
-                Here's how your ads will appear on {campaign.platform}
+                Here's how your ads will appear on {campaign?.platform}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -191,7 +192,7 @@ const CampaignLaunch = () => {
                   </div>
                 </TabsContent>
                 <TabsContent value="analyzer">
-                  <WebsiteAnalyzer />
+                  <WebsiteAnalyzer url={websiteUrl} />
                 </TabsContent>
               </Tabs>
             </CardContent>

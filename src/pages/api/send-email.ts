@@ -1,33 +1,31 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import sgMail from '@sendgrid/mail';
 
-// Initialize SendGrid with API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+import type { Request, Response } from 'express';
+import emailjs from '@emailjs/browser';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: Request, res: Response) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    const { email, content } = req.body;
+    const { email, subject, content } = req.body;
 
-    if (!email || !content) {
-      return res.status(400).json({ message: 'Email and content are required' });
-    }
+    // For server-side EmailJS, you need to use a different approach
+    // This is just a placeholder - in a real app, you would use a proper email service
+    const result = await emailjs.send(
+      process.env.VITE_EMAILJS_SERVICE_ID || '',
+      process.env.VITE_EMAILJS_TEMPLATE_ID || '',
+      {
+        to_email: email,
+        subject: subject,
+        content: content,
+      },
+      process.env.VITE_EMAILJS_PUBLIC_KEY || ''
+    );
 
-    const msg = {
-      to: email,
-      from: process.env.SENDGRID_FROM_EMAIL!, // Verified sender email
-      subject: 'Your Website Analysis and Campaign Recommendations',
-      text: content,
-      html: content.replace(/\n/g, '<br>'), // Convert newlines to HTML breaks
-    };
-
-    await sgMail.send(msg);
-    return res.status(200).json({ message: 'Email sent successfully' });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error sending email:', error);
     return res.status(500).json({ message: 'Failed to send email' });
   }
-} 
+}
