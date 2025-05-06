@@ -33,6 +33,30 @@ export type Database = {
         }
         Relationships: []
       }
+      website_analyses: {
+        Row: {
+          analysis_data: Json | null
+          campaign_recommendations: Json | null
+          created_at: string
+          id: number
+          url: string
+        }
+        Insert: {
+          analysis_data?: Json | null
+          campaign_recommendations?: Json | null
+          created_at?: string
+          id?: number
+          url: string
+        }
+        Update: {
+          analysis_data?: Json | null
+          campaign_recommendations?: Json | null
+          created_at?: string
+          id?: number
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

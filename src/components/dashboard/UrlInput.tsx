@@ -7,7 +7,7 @@ import { Search } from "lucide-react";
 import { toast } from "sonner";
 import MarketingProfileForm from "./MarketingProfileForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 
 interface UrlInputProps {
   onAnalyze: (url: string) => void;
@@ -50,21 +50,41 @@ const UrlInput: React.FC<UrlInputProps> = ({ onAnalyze, isAnalyzing }) => {
     // In a production app, we would store the profile data in Supabase here
     if (user) {
       try {
-        // First, create a metadata object to store additional information
-        const metadata = {
-          website_url: validatedUrl,
-          marketing_profile: profileData
+        // Create a test marketing profile (this would normally come from the form)
+        const testMarketingProfile = {
+          productOverview: "An AI-powered marketing campaign recommendation tool",
+          coreValueProposition: "Save time and increase ROI with AI-generated marketing campaigns",
+          targetAudience: {
+            type: "Business",
+            segments: ["Marketers", "Startups", "SMBs"]
+          },
+          currentAwareness: "MVP live",
+          goal: ["Awareness", "Signups", "Revenue"],
+          budget: "$1,000",
+          strengths: ["AI technology", "User-friendly interface", "Actionable recommendations"],
+          constraints: ["Limited brand awareness", "Competitive market"],
+          preferredChannels: ["Content marketing", "Social ads", "Email marketing"],
+          toneAndPersonality: "Professional, helpful, innovative"
         };
         
-        // Update only the metadata field which is allowed in the profiles table
-        await supabase
+        // Update user profile with website URL and marketing profile
+        const { error } = await supabase
           .from('profiles')
           .update({
-            metadata: metadata
+            updated_at: new Date().toISOString(),
+            username: user.email,
+            avatar_url: user.user_metadata?.avatar_url || null,
+            website_url: validatedUrl,
+            marketing_profile: testMarketingProfile
           })
           .eq('id', user.id);
         
-        toast.success("Profile data saved successfully");
+        if (error) {
+          console.error("Error storing profile data:", error);
+          toast.error("Failed to save profile data");
+        } else {
+          toast.success("Profile data saved successfully");
+        }
       } catch (error) {
         console.error("Error storing profile data:", error);
         toast.error("Failed to save profile data");
@@ -86,7 +106,7 @@ const UrlInput: React.FC<UrlInputProps> = ({ onAnalyze, isAnalyzing }) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="flex gap-2">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex-1">
                 <Input
                   placeholder="https://yourwebsite.com"
@@ -95,7 +115,7 @@ const UrlInput: React.FC<UrlInputProps> = ({ onAnalyze, isAnalyzing }) => {
                   className="w-full"
                 />
               </div>
-              <Button type="submit" disabled={isAnalyzing}>
+              <Button type="submit" disabled={isAnalyzing} className="w-full">
                 {isAnalyzing ? (
                   <span className="flex items-center gap-2">
                     <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
@@ -104,7 +124,7 @@ const UrlInput: React.FC<UrlInputProps> = ({ onAnalyze, isAnalyzing }) => {
                 ) : (
                   <span className="flex items-center gap-2">
                     <Search className="h-4 w-4" />
-                    Analyze
+                    Analyze Website
                   </span>
                 )}
               </Button>

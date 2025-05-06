@@ -1,12 +1,42 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Mail } from "lucide-react";
+import { Mail, PenLine, Mic, Film, Clone, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { WebsiteAnalyzer } from "@/components/WebsiteAnalyzer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import emailjs from '@emailjs/browser';
+import { supabase } from "@/lib/supabaseClient";
+import { useNavigate } from "react-router-dom";
+
+interface WebsiteAnalysis {
+  productOverview: string;
+  coreValueProposition: string;
+  targetAudience: {
+    type: "Consumers" | "Business" | "Government";
+    segments: string[];
+  };
+  currentAwareness: string;
+  goal: string[];
+  budget: string;
+  strengths: string[];
+  constraints: string[];
+  preferredChannels: string[];
+  toneAndPersonality: string;
+}
+
+interface CampaignRecommendation {
+  id: string;
+  title: string;
+  platform: string;
+  description: string;
+  insights: string[];
+  roi: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  budget: string;
+}
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -15,8 +45,10 @@ const Dashboard = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showExportForm, setShowExportForm] = useState(false);
   const [isEmailJsInitialized, setIsEmailJsInitialized] = useState(false);
+  const [recommendations, setRecommendations] = useState<CampaignRecommendation[]>([]);
+  const navigate = useNavigate();
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Initialize EmailJS with your public key
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
     if (!publicKey) {
@@ -32,224 +64,92 @@ const Dashboard = () => {
       console.error('Failed to initialize EmailJS:', error);
       toast.error('Failed to initialize email service');
     }
+
+    // Load recommendations from localStorage
+    const storedRecommendations = localStorage.getItem('campaignRecommendations');
+    if (storedRecommendations) {
+      setRecommendations(JSON.parse(storedRecommendations));
+    }
   }, []);
 
   const handleExportToEmail = () => {
-    setShowExportForm(true);
+    navigate('/export-campaign');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!isEmailJsInitialized) {
-      toast.error('Email service is not properly configured');
-      return;
-    }
-    
-    if (!email) {
-      toast.error("Please enter your email address");
-      return;
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const storedAnalysis = localStorage.getItem('websiteAnalysis');
-      const storedRecommendations = localStorage.getItem('campaignRecommendations');
-      
-      if (!storedAnalysis || !storedRecommendations) {
-        throw new Error('No analysis data available');
-      }
-
-      const analysis = JSON.parse(storedAnalysis);
-      const recommendations = JSON.parse(storedRecommendations);
-      
-      const emailContent = generateEmailContent(analysis, recommendations);
-      
-      const templateParams = {
-        to_email: email,
-        message: emailContent,
-        website_url: websiteUrl,
-      };
-
-      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-
-      if (!serviceId || !templateId) {
-        throw new Error('Email service configuration is incomplete');
-      }
-
-      await emailjs.send(serviceId, templateId, templateParams);
-      toast.success("Campaign details sent to your email!");
-      setEmail("");
-      setShowExportForm(false);
-    } catch (error) {
-      console.error('Error sending email:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleCampaignClick = (recommendation: CampaignRecommendation) => {
+    // Save the selected campaign to localStorage
+    localStorage.setItem('selectedCampaign', JSON.stringify(recommendation));
+    // Navigate to campaign launch page
+    navigate(`/campaigns/launch/${recommendation.id}`);
   };
 
-  const generateEmailContent = (analysis: any, recommendations: any[]) => {
-    const implementationSteps = recommendations.map((rec, index) => `
-      ${index + 1}. ${rec.title} (${rec.platform})
-         - Budget: ${rec.budget}
-         - Difficulty: ${rec.difficulty}
-         - Expected ROI: ${rec.roi}
-         - Implementation Steps:
-           a. Set up ${rec.platform} account if not already done
-           b. Create campaign following platform guidelines
-           c. Implement targeting based on insights
-           d. Set budget and schedule
-           e. Launch and monitor performance
-    `).join('\n\n');
-
-    return `
-      <h1>Website Analysis Report for ${websiteUrl}</h1>
-
-      <h2>OVERVIEW</h2>
-      <p><strong>Product Overview:</strong> ${analysis.productOverview}</p>
-      <p><strong>Core Value Proposition:</strong> ${analysis.coreValueProposition}</p>
-
-      <h2>TARGET AUDIENCE</h2>
-      <p><strong>Type:</strong> ${analysis.targetAudience.type}</p>
-      <p><strong>Segments:</strong> ${analysis.targetAudience.segments.join(', ')}</p>
-
-      <h2>CURRENT STATUS</h2>
-      <p><strong>Awareness Stage:</strong> ${analysis.currentAwareness}</p>
-      <p><strong>Goals:</strong> ${analysis.goal.join(', ')}</p>
-      <p><strong>Budget:</strong> ${analysis.budget}</p>
-
-      <h2>STRENGTHS & CONSTRAINTS</h2>
-      <h3>Strengths:</h3>
-      <ul>
-        ${analysis.strengths.map((s: string) => `<li>${s}</li>`).join('\n')}
-      </ul>
-
-      <h3>Constraints:</h3>
-      <ul>
-        ${analysis.constraints.map((c: string) => `<li>${c}</li>`).join('\n')}
-      </ul>
-
-      <h2>MARKETING APPROACH</h2>
-      <p><strong>Preferred Channels:</strong> ${analysis.preferredChannels.join(', ')}</p>
-      <p><strong>Tone and Personality:</strong> ${analysis.toneAndPersonality}</p>
-
-      <h2>RECOMMENDED CAMPAIGNS</h2>
-      ${recommendations.map(rec => `
-        <div style="margin-bottom: 20px;">
-          <h3>${rec.title}</h3>
-          <p><strong>Platform:</strong> ${rec.platform}</p>
-          <p><strong>Description:</strong> ${rec.description}</p>
-          <h4>Key Insights:</h4>
-          <ul>
-            ${rec.insights.map((insight: string) => `<li>${insight}</li>`).join('\n')}
-          </ul>
-          <p><strong>ROI:</strong> ${rec.roi}</p>
-          <p><strong>Difficulty:</strong> ${rec.difficulty}</p>
-          <p><strong>Budget:</strong> ${rec.budget}</p>
-        </div>
-      `).join('\n')}
-
-      <h2>IMPLEMENTATION GUIDE</h2>
-      ${implementationSteps}
-
-      <h2>NEXT STEPS</h2>
-      <ol>
-        <li>Review the analysis and recommendations</li>
-        <li>Prioritize campaigns based on your goals and resources</li>
-        <li>Start with the highest ROI, lowest difficulty campaigns</li>
-        <li>Set up tracking and analytics</li>
-        <li>Monitor and optimize performance</li>
-      </ol>
-
-      <p>Need help implementing these campaigns? Contact our support team for assistance.</p>
-    `;
+  const getIconForPlatform = (platform: string) => {
+    // Simple mapping of platforms to icons
+    const lowerPlatform = platform.toLowerCase();
+    if (lowerPlatform.includes('content')) return <PenLine className="h-4 w-4" />;
+    if (lowerPlatform.includes('video')) return <Film className="h-4 w-4" />;
+    if (lowerPlatform.includes('audio') || lowerPlatform.includes('podcast')) return <Mic className="h-4 w-4" />;
+    if (lowerPlatform.includes('email')) return <Mail className="h-4 w-4" />;
+    if (lowerPlatform.includes('social')) return <MessageCircle className="h-4 w-4" />;
+    return <Clone className="h-4 w-4" />;
   };
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Blastari Campaign Dashboard</h1>
-        <p className="text-muted-foreground">
-          Launch high-performing ad campaigns with AI-powered recommendations
+    <div className="space-y-8 pb-10">
+      <div className="bg-gray-50 rounded-xl p-8 flex flex-col items-center text-center">
+        <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-4">
+          <span className="text-white text-2xl font-bold">B</span>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">AdGPT</h1>
+        <p className="text-muted-foreground max-w-md">
+          Save time creating ads with AI-powered campaign recommendations.
         </p>
       </div>
 
       {websiteUrl ? (
-        <>
-          <WebsiteAnalyzer url={websiteUrl} />
-          
-          <div className="flex justify-center">
-            {!showExportForm ? (
-              <Button 
-                onClick={() => {
-                  toast.success("Campaign details sent to your email!");
-                }}
-                size="lg"
-                className="gap-2"
-                disabled
-              >
-                <Mail className="h-5 w-5" />
-                Export to Email
-              </Button>
-            ) : (
-              <Card className="w-full max-w-xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5 text-primary" />
-                    Get Your Campaign Details
-                  </CardTitle>
-                  <CardDescription>
-                    Enter your email to receive a detailed report of your campaign recommendations
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Input
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button 
-                        type="submit" 
-                        disabled={isSubmitting || !isEmailJsInitialized} 
-                        className="gap-2"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                            Sending...
-                          </>
-                        ) : (
-                          <>
-                            <Mail className="h-4 w-4" />
-                            Send to Email
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    {!isEmailJsInitialized && (
-                      <p className="text-sm text-red-500">
-                        Email service is not properly configured. Please check your environment variables.
+        <div>
+          {recommendations.length > 0 ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recommendations.map((recommendation) => (
+                  <Card 
+                    key={recommendation.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleCampaignClick(recommendation)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="bg-primary/10 p-2 rounded-full">
+                          {getIconForPlatform(recommendation.platform)}
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{recommendation.title}</h3>
+                          <p className="text-xs text-muted-foreground">{recommendation.platform}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {recommendation.description}
                       </p>
-                    )}
-                  </form>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              <div className="flex justify-center mt-8">
+                <Button 
+                  onClick={handleExportToEmail}
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Mail className="h-5 w-5" />
+                  Export to Email
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <WebsiteAnalyzer url={websiteUrl} />
+          )}
+        </div>
       ) : (
         <div className="text-center py-12">
           <p className="text-lg text-muted-foreground">
