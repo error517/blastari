@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface RecommendationProps {
   id: string;
@@ -22,6 +23,7 @@ export interface RecommendationProps {
   roi: string;
   difficulty: "Easy" | "Medium" | "Hard";
   budget: string;
+  website_url: string;
 }
 
 const CampaignRecommendation: React.FC<RecommendationProps> = ({
@@ -33,9 +35,59 @@ const CampaignRecommendation: React.FC<RecommendationProps> = ({
   roi,
   difficulty,
   budget,
+  website_url,
 }) => {
   const navigate = useNavigate();
   
+  useEffect(() => {
+    const storeRecommendation = async () => {
+      try {
+        // First check if this recommendation already exists
+        const { data: existingRec, error: fetchError } = await supabase
+          .from('campaign_recommendations')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          console.error('Error checking existing recommendation:', fetchError);
+          return;
+        }
+
+        if (existingRec) {
+          console.log('Recommendation already exists:', existingRec);
+          return;
+        }
+
+        // Store the recommendation
+        const { error: insertError } = await supabase
+          .from('campaign_recommendations')
+          .insert({
+            id,
+            website_url,
+            title,
+            platform,
+            description,
+            insights,
+            roi,
+            difficulty,
+            budget
+          });
+
+        if (insertError) {
+          console.error('Error storing recommendation:', insertError);
+          toast.error(`Failed to store recommendation: ${insertError.message}`);
+        } else {
+          console.log('Recommendation stored successfully');
+        }
+      } catch (err) {
+        console.error('Error in storeRecommendation:', err);
+      }
+    };
+
+    storeRecommendation();
+  }, [id, website_url, title, platform, description, insights, roi, difficulty, budget]);
+
   // Map difficulty to color
   const difficultyColor = {
     Easy: "bg-green-100 text-green-800",

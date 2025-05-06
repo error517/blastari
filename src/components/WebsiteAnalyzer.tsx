@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronUp, DollarSign, RefreshCw, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import LoadingAnimation from '@/components/LoadingAnimation';
 
 interface WebsiteAnalysis {
   productOverview: string;
@@ -89,12 +91,14 @@ const formatBudget = (amount: number) => {
 
 export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [analysis, setAnalysis] = useState<WebsiteAnalysis | null>(null);
   const [recommendations, setRecommendations] = useState<CampaignRecommendation[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState(5000); // Default to $5k
   const [tempBudget, setTempBudget] = useState(5000); // For slider value
   const [error, setError] = useState<string | null>(null);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
 
   useEffect(() => {
     if (url) {
@@ -103,24 +107,167 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
   }, [url]);
 
   const handleAnalyze = async () => {
-    if (!url) return;
-
     setIsLoading(true);
+    setIsAnalysisComplete(false);
     setError(null);
-    setAnalysis(null);
-    setRecommendations([]);
-    setShowAll(false);
-    setTempBudget(selectedBudget);
-
     try {
-      const { analysis: newAnalysis, recommendations: initialRecommendations } = await analyzeWebsite(url);
+      console.log('Checking if website analysis exists for:', url);
+      
+      // First check if the URL exists in the database
+      const { data: existingAnalysis, error: fetchError } = await supabase
+        .from('website_analyses')
+        .select('*')
+        .eq('website_url', url)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+        console.error('Error checking existing analysis:', fetchError);
+        toast.error('Failed to check existing analysis');
+        return;
+      }
+
+      if (existingAnalysis) {
+        console.log('Found existing analysis:', existingAnalysis);
+        
+        // Get existing recommendations
+        const { data: existingRecommendations, error: recommendationsError } = await supabase
+          .from('campaign_recommendations')
+          .select('*')
+          .eq('website_url', url);
+
+        if (recommendationsError) {
+          console.error('Error fetching existing recommendations:', recommendationsError);
+          toast.error('Failed to fetch existing recommendations');
+          return;
+        }
+
+        // Convert database format to component format
+        const analysis: WebsiteAnalysis = {
+          productOverview: existingAnalysis.product_overview,
+          coreValueProposition: existingAnalysis.core_value_proposition,
+          targetAudience: {
+            type: existingAnalysis.target_audience_type as "Consumers" | "Business" | "Government",
+            segments: existingAnalysis.target_audience_segments
+          },
+          currentAwareness: existingAnalysis.current_stage,
+          goal: existingAnalysis.goals,
+          budget: existingAnalysis.suggested_budget,
+          strengths: existingAnalysis.strengths,
+          constraints: existingAnalysis.constraints,
+          preferredChannels: existingAnalysis.preferred_channels,
+          toneAndPersonality: existingAnalysis.tone_and_personality
+        };
+
+        const recommendations: CampaignRecommendation[] = existingRecommendations.map(rec => ({
+          id: rec.id,
+          title: rec.title,
+          platform: rec.platform,
+          description: rec.description,
+          insights: rec.insights,
+          roi: rec.roi,
+          difficulty: rec.difficulty as "Easy" | "Medium" | "Hard",
+          budget: rec.budget
+        }));
+
+        setAnalysis(analysis);
+        setRecommendations(recommendations);
+        setSelectedBudget(parseInt(analysis.budget.replace(/[^0-9]/g, '')));
+        setTempBudget(parseInt(analysis.budget.replace(/[^0-9]/g, '')));
+        setShowAll(false);
+        toast.success('Loaded existing analysis and recommendations');
+        setIsAnalysisComplete(true);
+        return;
+      }
+
+      // If no existing analysis, proceed with OpenAI analysis
+      console.log('No existing analysis found, proceeding with OpenAI analysis');
+      const { analysis: newAnalysis, recommendations: newRecommendations } = await analyzeWebsite(url);
+      console.log('Analysis received:', newAnalysis);
+      console.log('Recommendations received:', newRecommendations);
+
       setAnalysis(newAnalysis);
-      setRecommendations(initialRecommendations);
-      toast.success('Analysis complete');
-    } catch (error) {
-      console.error('Error analyzing website:', error);
-      setError(error instanceof Error ? error.message : 'Failed to analyze website');
-      toast.error(error instanceof Error ? error.message : 'Failed to analyze website');
+      setRecommendations(newRecommendations);
+      setSelectedBudget(parseInt(newAnalysis.budget.replace(/[^0-9]/g, '')));
+      setTempBudget(parseInt(newAnalysis.budget.replace(/[^0-9]/g, '')));
+      setShowAll(false);
+
+      // Store website analysis in Supabase
+      console.log('Attempting to store website analysis...');
+      const analysisData = {
+        website_url: url,
+        product_overview: newAnalysis.productOverview,
+        core_value_proposition: newAnalysis.coreValueProposition,
+        target_audience_type: newAnalysis.targetAudience.type,
+        target_audience_segments: newAnalysis.targetAudience.segments,
+        current_stage: newAnalysis.currentAwareness,
+        goals: newAnalysis.goal,
+        suggested_budget: newAnalysis.budget,
+        strengths: newAnalysis.strengths,
+        constraints: newAnalysis.constraints,
+        preferred_channels: newAnalysis.preferredChannels,
+        tone_and_personality: newAnalysis.toneAndPersonality
+      };
+      console.log('Analysis data to be stored:', analysisData);
+
+      const { data: analysisResult, error: analysisError } = await supabase
+        .from('website_analyses')
+        .insert(analysisData)
+        .select();
+
+      if (analysisError) {
+        console.error('Error storing website analysis:', analysisError);
+        toast.error(`Failed to store website analysis: ${analysisError.message}`);
+      } else {
+        console.log('Website analysis stored successfully:', analysisResult);
+      }
+
+      // Store new recommendations in Supabase
+      console.log('Storing new recommendations...');
+      console.log('New recommendations to store:', JSON.stringify(newRecommendations, null, 2));
+
+      try {
+        const recommendationsToInsert = newRecommendations.map(rec => ({
+          website_url: url,
+          title: rec.title || '',
+          platform: rec.platform || '',
+          description: rec.description || '',
+          insights: Array.isArray(rec.insights) ? rec.insights : [],
+          roi: rec.roi || '',
+          difficulty: rec.difficulty || 'Medium',
+          budget: rec.budget || ''
+        }));
+
+        console.log('Formatted recommendations for insertion:', JSON.stringify(recommendationsToInsert, null, 2));
+
+        const { data: recommendationsResult, error: insertError } = await supabase
+          .from('campaign_recommendations')
+          .insert(recommendationsToInsert)
+          .select();
+
+        if (insertError) {
+          console.error('Error storing recommendations:', insertError);
+          console.error('Error details:', {
+            code: insertError.code,
+            message: insertError.message,
+            details: insertError.details,
+            hint: insertError.hint
+          });
+          toast.error(`Failed to store recommendations: ${insertError.message}`);
+        } else {
+          console.log('Successfully stored recommendations:', recommendationsResult);
+          toast.success(`Stored ${newRecommendations.length} recommendations`);
+        }
+      } catch (err) {
+        console.error('Error in recommendation storage process:', err);
+        toast.error('Failed to store recommendations');
+      }
+
+      toast.success('Website analyzed successfully');
+      setIsAnalysisComplete(true);
+    } catch (err) {
+      console.error('Error analyzing website:', err);
+      setError(err instanceof Error ? err.message : 'Failed to analyze website');
+      toast.error('Failed to analyze website');
     } finally {
       setIsLoading(false);
     }
@@ -177,14 +324,62 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
     setRecommendations(recommendations.slice(0, 3));
   };
 
+  const handleForceReanalyze = async () => {
+    setIsReanalyzing(true);
+    try {
+      // Delete existing analysis and recommendations
+      const { error: deleteAnalysisError } = await supabase
+        .from('website_analyses')
+        .delete()
+        .eq('website_url', url);
+
+      if (deleteAnalysisError) {
+        console.error('Error deleting existing analysis:', deleteAnalysisError);
+        toast.error('Failed to delete existing analysis');
+        return;
+      }
+
+      const { error: deleteRecommendationsError } = await supabase
+        .from('campaign_recommendations')
+        .delete()
+        .eq('website_url', url);
+
+      if (deleteRecommendationsError) {
+        console.error('Error deleting existing recommendations:', deleteRecommendationsError);
+        toast.error('Failed to delete existing recommendations');
+        return;
+      }
+
+      // Proceed with new analysis
+      await handleAnalyze();
+      toast.success('Website re-analyzed successfully');
+    } catch (err) {
+      console.error('Error in force reanalyze:', err);
+      toast.error('Failed to re-analyze website');
+    } finally {
+      setIsReanalyzing(false);
+    }
+  };
+
+  const handleShowMoreRecommendations = async () => {
+    if (!analysis) return;
+    
+    setIsLoading(true);
+    try {
+      const allRecommendations = await generateAllCampaigns(analysis, selectedBudget);
+      setRecommendations(allRecommendations);
+      setShowAll(true);
+      toast.success('Generated additional recommendations');
+    } catch (error) {
+      console.error('Error generating more recommendations:', error);
+      toast.error('Failed to generate more recommendations');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-        <p className="text-lg">Analyzing {url}...</p>
-        <p className="text-sm text-muted-foreground">This may take a moment</p>
-      </div>
-    );
+    return <LoadingAnimation isComplete={isAnalysisComplete} />;
   }
 
   if (error) {
@@ -210,7 +405,18 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Website Analysis</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Website Analysis</CardTitle>
+            <Button
+              variant="outline"
+              onClick={handleForceReanalyze}
+              disabled={isReanalyzing}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isReanalyzing ? 'animate-spin' : ''}`} />
+              {isReanalyzing ? 'Re-analyzing...' : 'Force Re-analysis'}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
@@ -291,22 +497,24 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
           <div className="flex flex-row items-center justify-between">
             <CardTitle>Campaign Recommendations</CardTitle>
             {recommendations.length > 0 && (
-              <Button
-                variant="ghost"
-                onClick={showAll ? handleShowLess : handleShowAll}
-                disabled={isLoading}
-                className="gap-2"
-              >
-                {showAll ? (
-                  <>
-                    Show Less <ChevronUp className="h-4 w-4" />
-                  </>
-                ) : (
-                  <>
-                    Show All Campaigns <ChevronDown className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={showAll ? handleShowLess : handleShowMoreRecommendations}
+                  disabled={isLoading}
+                  className="gap-2"
+                >
+                  {showAll ? (
+                    <>
+                      Show Less <ChevronUp className="h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Show More Campaigns <ChevronDown className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
           </div>
           
@@ -357,9 +565,9 @@ export function WebsiteAnalyzer({ url }: WebsiteAnalyzerProps) {
         <CardContent>
           {recommendations.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {recommendations.map((recommendation) => (
+              {recommendations.map((recommendation, index) => (
                 <Card 
-                  key={recommendation.id}
+                  key={`${recommendation.id || index}-${recommendation.title}`}
                   className={cn(
                     "transition-all duration-200 hover:shadow-lg",
                     getDifficultyColor(recommendation.difficulty)

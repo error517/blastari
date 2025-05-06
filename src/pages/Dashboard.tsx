@@ -59,7 +59,7 @@ const Dashboard = () => {
     
     setIsSubmitting(true);
     
-    try {
+      try {
       const storedAnalysis = localStorage.getItem('websiteAnalysis');
       const storedRecommendations = localStorage.getItem('campaignRecommendations');
       
@@ -89,7 +89,7 @@ const Dashboard = () => {
       toast.success("Campaign details sent to your email!");
       setEmail("");
       setShowExportForm(false);
-    } catch (error) {
+      } catch (error) {
       console.error('Error sending email:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
     } finally {
@@ -237,8 +237,8 @@ const Dashboard = () => {
                             Send to Email
                           </>
                         )}
-                      </Button>
-                    </div>
+              </Button>
+            </div>
                     {!isEmailJsInitialized && (
                       <p className="text-sm text-red-500">
                         Email service is not properly configured. Please check your environment variables.

@@ -33,6 +33,99 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_recommendations: {
+        Row: {
+          id: string
+          website_url: string
+          title: string
+          platform: string
+          description: string
+          insights: string[]
+          roi: string
+          difficulty: "Easy" | "Medium" | "Hard"
+          budget: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          website_url: string
+          title: string
+          platform: string
+          description: string
+          insights: string[]
+          roi: string
+          difficulty: "Easy" | "Medium" | "Hard"
+          budget: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          website_url?: string
+          title?: string
+          platform?: string
+          description?: string
+          insights?: string[]
+          roi?: string
+          difficulty?: "Easy" | "Medium" | "Hard"
+          budget?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      website_analyses: {
+        Row: {
+          id: string
+          website_url: string
+          product_overview: string
+          core_value_proposition: string
+          target_audience_type: string
+          target_audience_segments: string[]
+          current_stage: string
+          goals: string[]
+          suggested_budget: string
+          strengths: string[]
+          constraints: string[]
+          preferred_channels: string[]
+          tone_and_personality: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          website_url: string
+          product_overview: string
+          core_value_proposition: string
+          target_audience_type: string
+          target_audience_segments: string[]
+          current_stage: string
+          goals: string[]
+          suggested_budget: string
+          strengths: string[]
+          constraints: string[]
+          preferred_channels: string[]
+          tone_and_personality: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          website_url?: string
+          product_overview?: string
+          core_value_proposition?: string
+          target_audience_type?: string
+          target_audience_segments?: string[]
+          current_stage?: string
+          goals?: string[]
+          suggested_budget?: string
+          strengths?: string[]
+          constraints?: string[]
+          preferred_channels?: string[]
+          tone_and_personality?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

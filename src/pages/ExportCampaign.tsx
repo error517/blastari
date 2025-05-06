@@ -73,17 +73,17 @@ const ExportCampaign = () => {
     // Retrieve stored data
     try {
       const storedAnalysis = localStorage.getItem('websiteAnalysis');
-      const storedRecommendations = localStorage.getItem('campaignRecommendations');
-      const storedUrl = localStorage.getItem('analyzedWebsiteUrl');
-      
+    const storedRecommendations = localStorage.getItem('campaignRecommendations');
+    const storedUrl = localStorage.getItem('analyzedWebsiteUrl');
+    
       if (storedAnalysis) {
         setAnalysis(JSON.parse(storedAnalysis));
       }
-      if (storedRecommendations) {
-        setRecommendations(JSON.parse(storedRecommendations));
-      }
-      if (storedUrl) {
-        setWebsiteUrl(storedUrl);
+    if (storedRecommendations) {
+      setRecommendations(JSON.parse(storedRecommendations));
+    }
+    if (storedUrl) {
+      setWebsiteUrl(storedUrl);
       }
     } catch (error) {
       console.error('Error loading stored data:', error);
@@ -210,8 +210,8 @@ const ExportCampaign = () => {
       }
 
       await emailjs.send(serviceId, templateId, templateParams);
-      toast.success("Campaign details sent to your email!");
-      setEmail("");
+    toast.success("Campaign details sent to your email!");
+    setEmail("");
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
