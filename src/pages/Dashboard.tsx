@@ -1,56 +1,48 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Mail, Copy } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Mail } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { WebsiteAnalyzer } from "@/components/WebsiteAnalyzer";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
-import CampaignCard from "@/components/dashboard/CampaignCard";
-import { Textarea } from "@/components/ui/textarea";
-import { analyzeWebsite } from "@/lib/websiteAnalyzer";
-
-interface CampaignRecommendation {
-  id: string;
-  title: string;
-  platform: string;
-  description: string;
-  insights: string[];
-  roi: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  budget: string;
-}
+import emailjs from '@emailjs/browser';
 
 const Dashboard = () => {
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [recommendations, setRecommendations] = useState<CampaignRecommendation[]>([]);
-  const [selectedCampaign, setSelectedCampaign] = useState<CampaignRecommendation | null>(null);
-  const [prompt, setPrompt] = useState('');
-  const [gptResponse, setGptResponse] = useState('');
-  const [isGptLoading, setIsGptLoading] = useState(false);
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const websiteUrl = localStorage.getItem('analyzedWebsiteUrl') || '';
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showExportForm, setShowExportForm] = useState(false);
+  const [isEmailJsInitialized, setIsEmailJsInitialized] = useState(false);
 
-  useEffect(() => {
-    // Check if we already have recommendations in localStorage
-    const storedRecommendations = localStorage.getItem('campaignRecommendations');
-    if (storedRecommendations) {
-      setRecommendations(JSON.parse(storedRecommendations));
+  React.useEffect(() => {
+    // Initialize EmailJS with your public key
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+    if (!publicKey) {
+      console.error('EmailJS public key is not configured');
+      toast.error('Email service is not properly configured');
+      return;
     }
-    
-    // Get the stored website URL
-    const storedUrl = localStorage.getItem('analyzedWebsiteUrl');
-    if (storedUrl) {
-      setWebsiteUrl(storedUrl);
+
+    try {
+      emailjs.init(publicKey);
+      setIsEmailJsInitialized(true);
+    } catch (error) {
+      console.error('Failed to initialize EmailJS:', error);
+      toast.error('Failed to initialize email service');
     }
   }, []);
 
-  const handleAnalyzeWebsite = async (e: React.FormEvent) => {
+  const handleExportToEmail = () => {
+    setShowExportForm(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!websiteUrl) {
-      toast.error("Please enter a website URL");
+    if (!isEmailJsInitialized) {
+      toast.error('Email service is not properly configured');
       return;
     }
     
@@ -67,7 +59,7 @@ const Dashboard = () => {
     
     setIsSubmitting(true);
     
-      try {
+    try {
       const storedAnalysis = localStorage.getItem('websiteAnalysis');
       const storedRecommendations = localStorage.getItem('campaignRecommendations');
       
@@ -97,61 +89,97 @@ const Dashboard = () => {
       toast.success("Campaign details sent to your email!");
       setEmail("");
       setShowExportForm(false);
-      } catch (error) {
+    } catch (error) {
       console.error('Error sending email:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to send email. Please try again.');
     } finally {
-      setIsAnalyzing(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleCampaignClick = (recommendation: CampaignRecommendation) => {
-    setSelectedCampaign(recommendation);
-    setPrompt(`Help me create a marketing campaign for "${recommendation.title}" on ${recommendation.platform}. Budget: ${recommendation.budget}.`);
-  };
+  const generateEmailContent = (analysis: any, recommendations: any[]) => {
+    const implementationSteps = recommendations.map((rec, index) => `
+      ${index + 1}. ${rec.title} (${rec.platform})
+         - Budget: ${rec.budget}
+         - Difficulty: ${rec.difficulty}
+         - Expected ROI: ${rec.roi}
+         - Implementation Steps:
+           a. Set up ${rec.platform} account if not already done
+           b. Create campaign following platform guidelines
+           c. Implement targeting based on insights
+           d. Set budget and schedule
+           e. Launch and monitor performance
+    `).join('\n\n');
 
-  const handleGptSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt) return;
-    
-    setIsGptLoading(true);
-    setGptResponse('');
-    
-    // Simulate GPT response
-    try {
-      // In a real app, this would be an API call to OpenAI or similar
-      setTimeout(() => {
-        const sampleResponses = [
-          `Here's your ${selectedCampaign?.title} campaign plan for ${selectedCampaign?.platform}:\n\n1. Start with a compelling headline that addresses your audience's pain points.\n2. Use visual content that aligns with your brand identity.\n3. Include a clear call-to-action button with urgency.\n4. Set up proper tracking mechanisms to measure ROI.\n5. Test different variations to optimize performance.\n\nExpected ROI based on similar campaigns: ${selectedCampaign?.roi}`,
-          `For your ${selectedCampaign?.platform} campaign, I recommend:\n\n- Audience targeting: Focus on demographics that align with your product's value proposition.\n- Creative approach: Use storytelling to build emotional connection.\n- Budget allocation: Spend 60% on ad placement, 30% on creative, 10% on analytics.\n- Timeline: Run for 3 weeks with performance review at the halfway point.\n\nThis approach has worked well for similar campaigns targeting ${selectedCampaign?.difficulty} difficulty markets.`,
-          `Based on the insights for ${selectedCampaign?.title}, here's my recommendation:\n\n1. Create a sequence of 3-5 content pieces that build on each other.\n2. Start with educational content, then move to product features, and end with testimonials.\n3. Invest in high-quality visuals - they typically increase engagement by 65%.\n4. For your budget range of ${selectedCampaign?.budget}, focus on quality over quantity.\n5. Set up retargeting to capture interested users who don't convert initially.`
-        ];
-        
-        const randomResponse = sampleResponses[Math.floor(Math.random() * sampleResponses.length)];
-        setGptResponse(randomResponse);
-        setIsGptLoading(false);
-      }, 2000);
-    } catch (error) {
-      console.error("GPT error:", error);
-      toast.error("Failed to generate response");
-      setIsGptLoading(false);
-    }
-  };
+    return `
+      <h1>Website Analysis Report for ${websiteUrl}</h1>
 
-  const handleExportToEmail = () => {
-    navigate('/export-campaign');
+      <h2>OVERVIEW</h2>
+      <p><strong>Product Overview:</strong> ${analysis.productOverview}</p>
+      <p><strong>Core Value Proposition:</strong> ${analysis.coreValueProposition}</p>
+
+      <h2>TARGET AUDIENCE</h2>
+      <p><strong>Type:</strong> ${analysis.targetAudience.type}</p>
+      <p><strong>Segments:</strong> ${analysis.targetAudience.segments.join(', ')}</p>
+
+      <h2>CURRENT STATUS</h2>
+      <p><strong>Awareness Stage:</strong> ${analysis.currentAwareness}</p>
+      <p><strong>Goals:</strong> ${analysis.goal.join(', ')}</p>
+      <p><strong>Budget:</strong> ${analysis.budget}</p>
+
+      <h2>STRENGTHS & CONSTRAINTS</h2>
+      <h3>Strengths:</h3>
+      <ul>
+        ${analysis.strengths.map((s: string) => `<li>${s}</li>`).join('\n')}
+      </ul>
+
+      <h3>Constraints:</h3>
+      <ul>
+        ${analysis.constraints.map((c: string) => `<li>${c}</li>`).join('\n')}
+      </ul>
+
+      <h2>MARKETING APPROACH</h2>
+      <p><strong>Preferred Channels:</strong> ${analysis.preferredChannels.join(', ')}</p>
+      <p><strong>Tone and Personality:</strong> ${analysis.toneAndPersonality}</p>
+
+      <h2>RECOMMENDED CAMPAIGNS</h2>
+      ${recommendations.map(rec => `
+        <div style="margin-bottom: 20px;">
+          <h3>${rec.title}</h3>
+          <p><strong>Platform:</strong> ${rec.platform}</p>
+          <p><strong>Description:</strong> ${rec.description}</p>
+          <h4>Key Insights:</h4>
+          <ul>
+            ${rec.insights.map((insight: string) => `<li>${insight}</li>`).join('\n')}
+          </ul>
+          <p><strong>ROI:</strong> ${rec.roi}</p>
+          <p><strong>Difficulty:</strong> ${rec.difficulty}</p>
+          <p><strong>Budget:</strong> ${rec.budget}</p>
+        </div>
+      `).join('\n')}
+
+      <h2>IMPLEMENTATION GUIDE</h2>
+      ${implementationSteps}
+
+      <h2>NEXT STEPS</h2>
+      <ol>
+        <li>Review the analysis and recommendations</li>
+        <li>Prioritize campaigns based on your goals and resources</li>
+        <li>Start with the highest ROI, lowest difficulty campaigns</li>
+        <li>Set up tracking and analytics</li>
+        <li>Monitor and optimize performance</li>
+      </ol>
+
+      <p>Need help implementing these campaigns? Contact our support team for assistance.</p>
+    `;
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="bg-gray-50 rounded-xl p-8 flex flex-col items-center text-center mb-8">
-        <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-4">
-          <span className="text-white text-2xl font-bold">B</span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">AdGPT</h1>
-        <p className="text-muted-foreground max-w-md">
-          Save time creating ads with AI-powered campaign recommendations.
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Blastari Campaign Dashboard</h1>
+        <p className="text-muted-foreground">
+          Launch high-performing ad campaigns with AI-powered recommendations
         </p>
       </div>
 
@@ -209,8 +237,8 @@ const Dashboard = () => {
                             Send to Email
                           </>
                         )}
-              </Button>
-            </div>
+                      </Button>
+                    </div>
                     {!isEmailJsInitialized && (
                       <p className="text-sm text-red-500">
                         Email service is not properly configured. Please check your environment variables.
@@ -221,37 +249,12 @@ const Dashboard = () => {
               </Card>
             )}
           </div>
-        </div>
+        </>
       ) : (
-        <div>
-          <Card className="w-full mb-8">
-            <CardContent className="p-6">
-              <form onSubmit={handleAnalyzeWebsite} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="website-url" className="text-sm font-medium">
-                    Enter your website URL
-                  </label>
-                  <Input
-                    id="website-url"
-                    placeholder="https://yourwebsite.com"
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <Button type="submit" disabled={isAnalyzing} size="sm" className="w-fit mt-2">
-                  {isAnalyzing ? (
-                    <span className="flex items-center gap-2">
-                      <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                      Analyzing...
-                    </span>
-                  ) : (
-                    "Get Campaign Recommendations"
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+        <div className="text-center py-12">
+          <p className="text-lg text-muted-foreground">
+            Please enter a website URL on the landing page to get started
+          </p>
         </div>
       )}
     </div>
