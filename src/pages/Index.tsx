@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { LinkIcon, ArrowRight, LogIn, Rocket } from "lucide-react";
+import { LinkIcon, ArrowRight, Rocket } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -18,28 +18,28 @@ const Index = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!url) {
       toast.error("Please enter a website URL");
       return;
     }
-    
+
     // Simple URL validation
     try {
       const urlObj = new URL(url);
       if (!urlObj.protocol.startsWith("http")) {
         throw new Error("Invalid URL");
       }
-      
+
       // Show analyzing state
       setIsAnalyzing(true);
-      
-      // Store URL in localStorage to persist through auth
+
+      // Store URL in localStorage
       localStorage.setItem('analyzedWebsiteUrl', url);
-      
-      // Navigate to auth page
-      navigate(`/auth`);
-      
+
+      // Navigate directly to dashboard
+      navigate(`/dashboard`);
+
       // Reset state
       setIsAnalyzing(false);
     } catch (error) {
@@ -55,28 +55,20 @@ const Index = () => {
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <Rocket className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">Blastari</span>
+              <span className="text-xl font-bold">BLASTari</span>
             </div>
-            <Button 
-              variant="ghost" 
-              className="flex items-center gap-1"
-              onClick={() => navigate('/auth')}
-            >
-              <LogIn className="h-4 w-4" />
-              <span>Sign In</span>
-            </Button>
           </div>
           
           <div className="text-center">
             <div className={`space-y-6 transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
               <div className="inline-block bg-purple-100 px-4 py-1 rounded-full mb-4">
-                <p className="text-purple-800 text-sm font-medium">AI-Powered Advertising</p>
+                <p className="text-purple-800 text-sm font-medium">AI-Powered Marketing</p>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mx-auto max-w-3xl">
-                Launch <span className="text-primary">high-performing</span> ad campaigns in seconds
+                Launch <span className="text-primary">high-performing</span> campaigns in seconds
               </h1>
               <p className="text-xl text-gray-600 mx-auto max-w-2xl mb-8">
-                Blastari uses AI to analyze your website and create optimized ad campaigns tailored to your business needs.
+                Blastari uses AI to analyze your website and create an optimized marketing strategy tailored to your business needs.
               </p>
               
               <div className="pt-6 max-w-xl mx-auto">
@@ -131,10 +123,10 @@ const Index = () => {
               <p className="text-gray-400">AI-powered ad campaign platform</p>
             </div>
             <div className="flex space-x-6">
-              <a href="#" className="hover:text-primary">Features</a>
+              {/* <a href="#" className="hover:text-primary">Features</a>
               <a href="#" className="hover:text-primary">Pricing</a>
               <a href="#" className="hover:text-primary">Documentation</a>
-              <a href="#" className="hover:text-primary">Contact</a>
+              <a href="#" className="hover:text-primary">Contact</a> */}
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center md:text-left">

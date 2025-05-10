@@ -27,16 +27,16 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/campaigns" element={<CampaignsPage />} />
-                <Route path="/campaigns/launch/:id" element={<CampaignLaunch />} />
-                <Route path="/content" element={<ContentStudio />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/export-campaign" element={<ExportCampaign />} />
-              </Route>
+            {/* Auth page kept for compatibility but it's no longer needed */}
+            <Route path="/auth" element={<Dashboard />} />
+            {/* All routes are now directly accessible without authentication */}
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/campaigns" element={<CampaignsPage />} />
+              <Route path="/campaigns/launch/:id" element={<CampaignLaunch />} />
+              <Route path="/content" element={<ContentStudio />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/export-campaign" element={<ExportCampaign />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

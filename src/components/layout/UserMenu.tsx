@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,23 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogOut, Settings } from "lucide-react";
+import { User, Settings } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from "sonner";
 
 const UserMenu = () => {
-  const { user, profile, signOut } = useAuth();
-  const navigate = useNavigate();
-  
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success("Signed out successfully");
-      navigate('/');
-    } catch (error) {
-      toast.error("Error signing out");
-    }
-  };
+  const { profile, user } = useAuth();
 
   const getInitials = () => {
     if (profile?.username) {
@@ -58,11 +45,6 @@ const UserMenu = () => {
         <DropdownMenuItem className="cursor-pointer">
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer text-destructive" onClick={handleSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Logout</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
